@@ -1,12 +1,16 @@
+import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import '../../../../core/theme/theme.dart';
-import '../../../../core/storage/session_storage.dart';
+import 'package:pink_auto/core/theme/theme.dart';
+import 'package:pink_auto/core/storage/session_storage.dart';
 import '../viewmodels/driver_home_viewmodel.dart';
 import '../../domain/models/driver_status.dart';
 import '../../domain/models/trip_state.dart';
 import '../widgets/incoming_ride_request_card.dart';
 import '../widgets/pickup_navigation_card.dart';
+import '../widgets/arrived_pickup_card.dart';
+import '../widgets/dropoff_navigation_card.dart';
+import '../widgets/ride_completed_card.dart';
 
 class DriverHomeScreen extends StatelessWidget {
   const DriverHomeScreen({super.key});
@@ -96,26 +100,24 @@ class DriverHomeView extends StatelessWidget {
       ),
       body: Stack(
         children: [
-          // Map Background placeholder
-          Container(
-            color: Colors.grey.shade200,
-            child: Stack(
-              children: [
-                Center(
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      const Icon(Icons.map, size: 64, color: Colors.grey),
-                      const SizedBox(height: 16),
-                      Text(
-                        vm.currentLocation != null
-                            ? "Lat: \${vm.currentLocation!.latitude.toStringAsFixed(4)}, Lng: \${vm.currentLocation!.longitude.toStringAsFixed(4)}"
-                            : "Locating Driver...",
-                        style: const TextStyle(color: Colors.grey, fontSize: 16),
-                      ),
-                    ],
-                  ),
-                ),
+          // Google Map
+          if (vm.currentLocation != null)
+            GoogleMap(
+              initialCameraPosition: CameraPosition(
+                target: LatLng(vm.currentLocation!.latitude, vm.currentLocation!.longitude),
+                zoom: 15,
+              ),
+              myLocationEnabled: true,
+              myLocationButtonEnabled: false,
+              zoomControlsEnabled: false,
+            )
+          else
+            Container(
+              color: Colors.grey.shade200,
+              child: const Center(
+                child: CircularProgressIndicator(),
+              ),
+            ),
                 if (vm.tripState == TripState.drivingToPickup && vm.currentRequest != null)
                   Positioned(
                     top: 150,
@@ -290,43 +292,34 @@ class DriverHomeView extends StatelessWidget {
             ),
 
           // Arrived at Pickup
-          if (vm.tripState == TripState.arrivedAtPickup)
+          if (vm.tripState == TripState.arrivedAtPickup && vm.currentRequest != null)
             Align(
               alignment: Alignment.bottomCenter,
-              child: Container(
-                width: double.infinity,
-                padding: const EdgeInsets.all(24),
-                decoration: const BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-                ),
-                child: SafeArea(
-                  top: false,
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      const Icon(Icons.check_circle, color: PinkAppTheme.success, size: 64),
-                      const SizedBox(height: 16),
-                      const Text("Arrived at Pickup", style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
-                      const SizedBox(height: 16),
-                      const Text("Waiting for rider... (Next stage feature)"),
-                      const SizedBox(height: 24),
-                      SizedBox(
-                        width: double.infinity,
-                        height: 56,
-                        child: OutlinedButton(
-                          onPressed: () {
-                            // Reset state for testing purposes in this stage
-                            vm.rejectRide();
-                          },
-                          child: const Text("RESET (Test only)"),
-                        ),
-                      )
-                    ],
-                  ),
-                ),
+              child: ArrivedPickupCard(
+                request: vm.currentRequest!,
+                onStartTrip: vm.startTrip,
               ),
-            )
+            ),
+            
+          // Navigating to Dropoff
+          if (vm.tripState == TripState.tripStarted && vm.currentRequest != null)
+            Align(
+              alignment: Alignment.bottomCenter,
+              child: DropoffNavigationCard(
+                request: vm.currentRequest!,
+                onCompleteRide: vm.completeTrip,
+              ),
+            ),
+            
+          // Ride Completed
+          if (vm.tripState == TripState.completed && vm.currentRequest != null)
+            Align(
+              alignment: Alignment.bottomCenter,
+              child: RideCompletedCard(
+                request: vm.currentRequest!,
+                onDone: vm.resetToOnline,
+              ),
+            ),
         ],
       ),
     );

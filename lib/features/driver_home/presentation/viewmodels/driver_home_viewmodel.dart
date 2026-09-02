@@ -152,6 +152,32 @@ class DriverHomeViewModel extends ChangeNotifier {
     }
   }
 
+  Future<bool> startTrip(String otp) async {
+    // Mock OTP validation (e.g., '1234' is correct)
+    if (otp == '1234') {
+      _tripState = TripState.tripStarted;
+      notifyListeners();
+      return true;
+    }
+    return false;
+  }
+
+  void completeTrip() {
+    if (_tripState == TripState.tripStarted) {
+      _tripState = TripState.completed;
+      notifyListeners();
+    }
+  }
+
+  void resetToOnline() {
+    if (_tripState == TripState.completed && _currentLocation != null) {
+      _tripState = TripState.available;
+      _currentRequest = null;
+      notifyListeners();
+      _rideService.setOnlineStatus(true, _currentLocation!); // trigger next mock request
+    }
+  }
+
   @override
   void dispose() {
     _locationSub?.cancel();
