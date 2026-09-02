@@ -101,6 +101,8 @@ class DriverHomeView extends StatelessWidget {
         children: [
           // Map Background placeholder
           Container(
+            width: double.infinity,
+            height: double.infinity,
             color: Colors.grey.shade200,
             child: Stack(
               children: [
