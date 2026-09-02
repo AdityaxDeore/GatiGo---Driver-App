@@ -1,4 +1,3 @@
-import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:pink_auto/core/theme/theme.dart';
@@ -100,24 +99,29 @@ class DriverHomeView extends StatelessWidget {
       ),
       body: Stack(
         children: [
-          // Google Map
-          if (vm.currentLocation != null)
-            GoogleMap(
-              initialCameraPosition: CameraPosition(
-                target: LatLng(vm.currentLocation!.latitude, vm.currentLocation!.longitude),
-                zoom: 15,
-              ),
-              myLocationEnabled: true,
-              myLocationButtonEnabled: false,
-              zoomControlsEnabled: false,
-            )
-          else
-            Container(
-              color: Colors.grey.shade200,
-              child: const Center(
-                child: CircularProgressIndicator(),
-              ),
+          // Map Background placeholder
+          Container(
+            color: Colors.grey.shade200,
+            child: Stack(
+              children: [
+                Center(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const Icon(Icons.map, size: 64, color: Colors.grey),
+                      const SizedBox(height: 16),
+                      Text(
+                        vm.currentLocation != null
+                            ? "Lat: \${vm.currentLocation!.latitude.toStringAsFixed(4)}, Lng: \${vm.currentLocation!.longitude.toStringAsFixed(4)}"
+                            : "Locating Driver...",
+                        style: const TextStyle(color: Colors.grey, fontSize: 16),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
             ),
+          ),
           // Driver Status Header overlay
           SafeArea(
             child: Align(
