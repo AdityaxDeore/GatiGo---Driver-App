@@ -118,25 +118,6 @@ class DriverHomeView extends StatelessWidget {
                 child: CircularProgressIndicator(),
               ),
             ),
-                if (vm.tripState == TripState.drivingToPickup && vm.currentRequest != null)
-                  Positioned(
-                    top: 150,
-                    left: 50,
-                    child: Column(
-                      children: [
-                        const Icon(Icons.location_on, size: 48, color: Colors.blue),
-                        Container(
-                          padding: const EdgeInsets.all(4),
-                          color: Colors.white,
-                          child: const Text("Pickup Location"),
-                        )
-                      ],
-                    ),
-                  ),
-              ],
-            ),
-          ),
-          
           // Driver Status Header overlay
           SafeArea(
             child: Align(
