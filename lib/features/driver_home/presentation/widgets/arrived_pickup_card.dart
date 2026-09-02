@@ -101,7 +101,7 @@ class _ArrivedPickupCardState extends State<ArrivedPickupCard> {
                 child: ElevatedButton(
                   onPressed: _isLoading ? null : _handleStart,
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: PinkAppTheme.primary,
+                    backgroundColor: PinkAppTheme.primaryPink,
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(28)),
                   ),
                   child: _isLoading

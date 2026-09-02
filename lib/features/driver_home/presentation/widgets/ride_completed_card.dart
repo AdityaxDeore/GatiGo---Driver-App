@@ -51,7 +51,7 @@ class RideCompletedCard extends StatelessWidget {
                     const SizedBox(height: 8),
                     Text(
                       "₹\${request.estimatedFare.toStringAsFixed(2)}",
-                      style: const TextStyle(fontSize: 40, fontWeight: FontWeight.bold, color: PinkAppTheme.primary),
+                      style: const TextStyle(fontSize: 40, fontWeight: FontWeight.bold, color: PinkAppTheme.primaryPink),
                     ),
                   ],
                 ),

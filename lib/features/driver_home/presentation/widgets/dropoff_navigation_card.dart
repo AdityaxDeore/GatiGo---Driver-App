@@ -35,7 +35,7 @@ class DropoffNavigationCard extends StatelessWidget {
             children: [
               Row(
                 children: [
-                  const Icon(Icons.location_on, color: PinkAppTheme.primary, size: 32),
+                  const Icon(Icons.location_on, color: PinkAppTheme.primaryPink, size: 32),
                   const SizedBox(width: 16),
                   Expanded(
                     child: Column(
@@ -77,7 +77,7 @@ class DropoffNavigationCard extends StatelessWidget {
                 child: ElevatedButton(
                   onPressed: onCompleteRide,
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: PinkAppTheme.primary,
+                    backgroundColor: PinkAppTheme.primaryPink,
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(28)),
                   ),
                   child: const Text(
