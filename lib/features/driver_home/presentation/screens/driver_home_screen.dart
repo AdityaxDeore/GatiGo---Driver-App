@@ -175,14 +175,32 @@ class DriverHomeView extends StatelessWidget {
               ),
             ),
 
-          // Offline Overlay
+          // Offline Banner in Map Area
           if (vm.status == DriverStatus.offline)
-            Container(
-              color: Colors.black.withValues(alpha: 0.5),
-              child: const Center(
-                child: Text(
-                  "You are offline",
-                  style: TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.bold),
+            Center(
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                decoration: BoxDecoration(
+                  color: Colors.white.withValues(alpha: 0.95),
+                  borderRadius: BorderRadius.circular(16),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.08),
+                      blurRadius: 12,
+                      offset: const Offset(0, 4),
+                    ),
+                  ],
+                ),
+                child: const Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(Icons.cloud_off_rounded, color: Colors.grey, size: 24),
+                    SizedBox(width: 10),
+                    Text(
+                      "You are currently offline",
+                      style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: Colors.grey),
+                    ),
+                  ],
                 ),
               ),
             ),

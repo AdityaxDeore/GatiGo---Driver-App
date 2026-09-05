@@ -74,7 +74,7 @@ class _ArrivedPickupCardState extends State<ArrivedPickupCard> {
               const SizedBox(height: 16),
               const Text("Arrived at Pickup", style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
               const SizedBox(height: 8),
-              Text("Ask \${widget.request.riderName} for the 4-digit PIN", style: const TextStyle(color: Colors.grey)),
+              Text("Ask ${widget.request.riderName} for the 4-digit PIN", style: const TextStyle(color: Colors.grey)),
               const SizedBox(height: 24),
               TextField(
                 controller: _otpController,
