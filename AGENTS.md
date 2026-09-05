@@ -1,6 +1,6 @@
-# AI Agent Governance & Handover Protocols: Pink Auto Customer App
+# AI Agent Governance & Handover Protocols: Pink Auto Driver App
 
-To ensure seamless collaborative engineering between humans and AI agents in subsequent phases of the **Pink Auto Customer App**, this document establishes roles, agent personas, task boundaries, and execution handovers.
+To ensure seamless collaborative engineering between humans and AI agents in subsequent phases of the **Pink Auto Driver App**, this document establishes roles, agent personas, task boundaries, and execution handovers.
 
 ---
 
