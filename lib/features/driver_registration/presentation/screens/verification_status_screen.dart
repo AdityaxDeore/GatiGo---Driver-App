@@ -9,39 +9,150 @@ class VerificationStatusScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
-      body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.all(32.0),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              const Icon(Icons.hourglass_empty, size: 80, color: PinkAppTheme.primaryPink),
-              const SizedBox(height: 32),
-              const Text(
-                "Application Submitted",
-                textAlign: TextAlign.center,
-                style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold),
-              ),
-              const SizedBox(height: 16),
-              const Text(
-                "Your driver and vehicle documents are currently under review. This usually takes up to 24 hours.",
-                textAlign: TextAlign.center,
-                style: TextStyle(fontSize: 16, color: Colors.grey),
-              ),
-              const SizedBox(height: 48),
-              MdsButton(
-                text: "Refresh Status (Mock Approve)",
-                onPressed: () async {
-                  // Mock approval for demo
-                  await SessionStorage.login('mock-jwt-token-value-xyz', isRegistered: true);
-                  if (context.mounted) {
-                    Navigator.pushReplacementNamed(context, '/home');
-                  }
-                },
-              ),
+      body: Container(
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            colors: [
+              PinkAppTheme.accentPurple.withValues(alpha: 0.06),
+              PinkAppTheme.primaryPink.withValues(alpha: 0.03),
+              Colors.white,
             ],
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+          ),
+        ),
+        child: SafeArea(
+          child: Center(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 20.0),
+              child: Container(
+                constraints: const BoxConstraints(maxWidth: 450),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(28),
+                  boxShadow: [
+                    BoxShadow(
+                      color: PinkAppTheme.primaryPink.withValues(alpha: 0.1),
+                      blurRadius: 24,
+                      offset: const Offset(0, 8),
+                    ),
+                  ],
+                ),
+                padding: const EdgeInsets.all(32.0),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    Center(
+                      child: Container(
+                        width: 100,
+                        height: 100,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: PinkAppTheme.backgroundLight,
+                          border: Border.all(
+                            color: PinkAppTheme.primaryPink.withValues(alpha: 0.3),
+                            width: 3,
+                          ),
+                        ),
+                        child: const Icon(
+                          Icons.hourglass_top_rounded,
+                          size: 48,
+                          color: PinkAppTheme.primaryPink,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 28),
+                    const Text(
+                      "Application Submitted",
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        fontSize: 26,
+                        fontWeight: FontWeight.w900,
+                        color: PinkAppTheme.textDark,
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    Text(
+                      "Your ${SessionStorage.getAutoType()} documents are currently under verification. This usually takes up to 24 hours.",
+                      textAlign: TextAlign.center,
+                      style: const TextStyle(
+                        fontSize: 15,
+                        color: PinkAppTheme.textLight,
+                        height: 1.4,
+                      ),
+                    ),
+                    const SizedBox(height: 20),
+                    Container(
+                      padding: const EdgeInsets.all(14),
+                      decoration: BoxDecoration(
+                        color: PinkAppTheme.backgroundLight,
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(
+                          color: PinkAppTheme.primaryPink.withValues(alpha: 0.2),
+                        ),
+                      ),
+                      child: Row(
+                        children: [
+                          const Icon(Icons.shield_outlined,
+                              color: PinkAppTheme.primaryPink, size: 22),
+                          const SizedBox(width: 10),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  SessionStorage.getAutoType(),
+                                  style: const TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 14,
+                                    color: PinkAppTheme.textDark,
+                                  ),
+                                ),
+                                Text(
+                                  "Vehicle: ${SessionStorage.getVehicleNumber()}",
+                                  style: const TextStyle(
+                                    fontSize: 12,
+                                    color: Colors.grey,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 10, vertical: 4),
+                            decoration: BoxDecoration(
+                              color: Colors.amber.shade100,
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: Text(
+                              "IN REVIEW",
+                              style: TextStyle(
+                                fontSize: 11,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.amber.shade900,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 36),
+                    MdsButton(
+                      text: "Check Verification Status",
+                      onPressed: () async {
+                        // Mock approval for demo
+                        await SessionStorage.approveDriver();
+                        if (context.mounted) {
+                          Navigator.pushReplacementNamed(context, '/home');
+                        }
+                      },
+                    ),
+                  ],
+                ),
+              ),
+            ),
           ),
         ),
       ),

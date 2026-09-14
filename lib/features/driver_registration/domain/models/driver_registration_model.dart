@@ -53,7 +53,7 @@ class VehicleDetails {
     this.model = '',
     this.year = '',
     this.color = '',
-    this.type = '',
+    this.type = 'Pink Auto',
   });
 
   VehicleDetails copyWith({

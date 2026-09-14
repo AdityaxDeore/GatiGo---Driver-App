@@ -10,8 +10,8 @@ class RideService {
   Stream<RideRequest?> get incomingRequests => _requestStreamController.stream;
 
   Future<bool> setOnlineStatus(bool isOnline, LocationCoordinate currentLoc) async {
-    // Simulate network delay
-    await Future.delayed(const Duration(seconds: 1));
+    // Fast simulated handshake
+    await Future.delayed(const Duration(milliseconds: 150));
     _currentStatus = isOnline ? DriverStatus.online : DriverStatus.offline;
 
     if (isOnline) {
@@ -26,11 +26,11 @@ class RideService {
 
   void _startMockRequestGenerator(LocationCoordinate currentLoc) {
     _mockRequestTimer?.cancel();
-    // Generate a mock request after 5 seconds of going online
-    _mockRequestTimer = Timer(const Duration(seconds: 5), () {
+    // Generate a mock request after 3 seconds of going online
+    _mockRequestTimer = Timer(const Duration(seconds: 3), () {
       if (_currentStatus == DriverStatus.online) {
         final mockRequest = RideRequest(
-          id: 'req_\${DateTime.now().millisecondsSinceEpoch}',
+          id: 'req_${DateTime.now().millisecondsSinceEpoch}',
           riderName: 'Priya M.',
           pickupLocation: LocationCoordinate(
               latitude: currentLoc.latitude + 0.002,

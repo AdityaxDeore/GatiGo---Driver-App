@@ -15,6 +15,8 @@ class DriverHomeViewModel extends ChangeNotifier {
   LocationCoordinate? _currentLocation;
   RideRequest? _currentRequest;
   String? _errorMessage;
+  bool _hasReachedPickup = false;
+  bool _hasReachedDestination = false;
 
   StreamSubscription<LocationCoordinate>? _locationSub;
   StreamSubscription<RideRequest?>? _rideSub;
@@ -24,6 +26,8 @@ class DriverHomeViewModel extends ChangeNotifier {
   LocationCoordinate? get currentLocation => _currentLocation;
   RideRequest? get currentRequest => _currentRequest;
   String? get errorMessage => _errorMessage;
+  bool get hasReachedPickup => _hasReachedPickup;
+  bool get hasReachedDestination => _hasReachedDestination;
 
   bool get isOnline => _status == DriverStatus.online;
 
@@ -124,12 +128,28 @@ class DriverHomeViewModel extends ChangeNotifier {
     
     final success = await _rideService.acceptRequest(_currentRequest!.id);
     if (success) {
+      _hasReachedPickup = false;
+      _hasReachedDestination = false;
       _tripState = TripState.drivingToPickup;
       notifyListeners();
     } else {
       _errorMessage = "Ride no longer available.";
       _tripState = TripState.available;
       _currentRequest = null;
+      notifyListeners();
+    }
+  }
+
+  void setReachedPickup(bool reached) {
+    if (_hasReachedPickup != reached) {
+      _hasReachedPickup = reached;
+      notifyListeners();
+    }
+  }
+
+  void setReachedDestination(bool reached) {
+    if (_hasReachedDestination != reached) {
+      _hasReachedDestination = reached;
       notifyListeners();
     }
   }
@@ -147,14 +167,16 @@ class DriverHomeViewModel extends ChangeNotifier {
 
   void arrivedAtPickup() {
     if (_tripState == TripState.drivingToPickup) {
+      _hasReachedPickup = true;
       _tripState = TripState.arrivedAtPickup;
       notifyListeners();
     }
   }
 
   Future<bool> startTrip(String otp) async {
-    // Mock OTP validation (e.g., '1234' is correct)
-    if (otp == '1234') {
+    // Universal 4-digit OTP validation
+    if (RegExp(r'^\d{4}$').hasMatch(otp.trim())) {
+      _hasReachedDestination = false;
       _tripState = TripState.tripStarted;
       notifyListeners();
       return true;
@@ -162,8 +184,26 @@ class DriverHomeViewModel extends ChangeNotifier {
     return false;
   }
 
-  void completeTrip() {
+  void arrivedAtDestination() {
     if (_tripState == TripState.tripStarted) {
+      _hasReachedDestination = true;
+      _tripState = TripState.arrivedAtDestination;
+      notifyListeners();
+    }
+  }
+
+  Future<bool> completeTripWithOtp(String otp) async {
+    // Universal 4-digit Drop-off OTP validation
+    if (RegExp(r'^\d{4}$').hasMatch(otp.trim())) {
+      _tripState = TripState.completed;
+      notifyListeners();
+      return true;
+    }
+    return false;
+  }
+
+  void completeTrip() {
+    if (_tripState == TripState.tripStarted || _tripState == TripState.arrivedAtDestination) {
       _tripState = TripState.completed;
       notifyListeners();
     }

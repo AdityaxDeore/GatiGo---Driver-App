@@ -80,7 +80,7 @@ class _IncomingRideRequestCardState extends State<IncomingRideRequestCard> {
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                   decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(20)),
-                  child: const Text("\${_secondsLeft}s", style: TextStyle(color: PinkAppTheme.primaryPink, fontWeight: FontWeight.bold)),
+                  child: Text("${_secondsLeft}s", style: const TextStyle(color: PinkAppTheme.primaryPink, fontWeight: FontWeight.bold)),
                 ),
               ],
             ),
@@ -95,7 +95,7 @@ class _IncomingRideRequestCardState extends State<IncomingRideRequestCard> {
                     const SizedBox(width: 8),
                     Text(widget.request.riderName, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
                     const Spacer(),
-                    const Text("₹\${widget.request.estimatedFare.toStringAsFixed(0)}", style: TextStyle(fontSize: 24, fontWeight: FontWeight.w900, color: PinkAppTheme.primaryPink)),
+                    Text("₹${widget.request.estimatedFare.toStringAsFixed(0)}", style: const TextStyle(fontSize: 24, fontWeight: FontWeight.w900, color: PinkAppTheme.primaryPink)),
                   ],
                 ),
                 const SizedBox(height: 16),
@@ -104,7 +104,7 @@ class _IncomingRideRequestCardState extends State<IncomingRideRequestCard> {
                 Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Icon(Icons.my_location, color: Colors.blue),
+                    const Icon(Icons.my_location, color: Colors.green),
                     const SizedBox(width: 12),
                     Expanded(
                       child: Column(
@@ -138,12 +138,12 @@ class _IncomingRideRequestCardState extends State<IncomingRideRequestCard> {
                   ],
                 ),
                 const SizedBox(height: 16),
-                const Row(
+                Row(
                   mainAxisAlignment: MainAxisAlignment.spaceAround,
                   children: [
                     Column(
                       children: [
-                        Text("\${widget.request.estimatedDurationMins} mins", style: TextStyle(fontWeight: FontWeight.bold)),
+                        Text("${widget.request.estimatedDurationMins} mins", style: const TextStyle(fontWeight: FontWeight.bold)),
                       ],
                     ),
                   ],

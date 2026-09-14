@@ -68,7 +68,12 @@ class _PhoneAuthScreenState extends State<PhoneAuthScreen> {
       onSuccess: (isRegistered) async {
         _showSnackBar("Authentication Successful!", PinkAppTheme.success);
         
-        await SessionStorage.login('mock-jwt-token-value-xyz', isRegistered: isRegistered);
+        final phone = _viewModel.phoneController.text.trim();
+        await SessionStorage.login(
+          'mock-jwt-token-value-xyz',
+          isRegistered: isRegistered,
+          phone: phone.isNotEmpty ? '+91 $phone' : null,
+        );
         
         if (mounted) {
           if (isRegistered) {
@@ -280,7 +285,7 @@ class _PhoneAuthScreenState extends State<PhoneAuthScreen> {
                               ),
                               child: ClipOval(
                                 child: Image.asset(
-                                  'assets/images/logo.jpg',
+                                  'assets/images/logo_new.png',
                                   fit: BoxFit.cover,
                                 ),
                               ),

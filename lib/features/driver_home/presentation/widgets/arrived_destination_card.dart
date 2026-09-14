@@ -2,21 +2,21 @@ import 'package:flutter/material.dart';
 import 'package:pink_auto/core/theme/theme.dart';
 import '../../domain/models/ride_request.dart';
 
-class ArrivedPickupCard extends StatefulWidget {
+class ArrivedDestinationCard extends StatefulWidget {
   final RideRequest request;
-  final Future<bool> Function(String) onStartTrip;
+  final Future<bool> Function(String) onVerifyOtp;
 
-  const ArrivedPickupCard({
+  const ArrivedDestinationCard({
     super.key,
     required this.request,
-    required this.onStartTrip,
+    required this.onVerifyOtp,
   });
 
   @override
-  State<ArrivedPickupCard> createState() => _ArrivedPickupCardState();
+  State<ArrivedDestinationCard> createState() => _ArrivedDestinationCardState();
 }
 
-class _ArrivedPickupCardState extends State<ArrivedPickupCard> {
+class _ArrivedDestinationCardState extends State<ArrivedDestinationCard> {
   final TextEditingController _otpController = TextEditingController();
   bool _isLoading = false;
   String? _errorText;
@@ -27,7 +27,7 @@ class _ArrivedPickupCardState extends State<ArrivedPickupCard> {
     super.dispose();
   }
 
-  void _handleStart() async {
+  void _handleVerify() async {
     final otp = _otpController.text.trim();
     if (otp.length != 4) {
       setState(() => _errorText = 'Enter 4-digit OTP');
@@ -39,8 +39,8 @@ class _ArrivedPickupCardState extends State<ArrivedPickupCard> {
       _errorText = null;
     });
 
-    final success = await widget.onStartTrip(otp);
-    
+    final success = await widget.onVerifyOtp(otp);
+
     if (mounted) {
       setState(() {
         _isLoading = false;
@@ -56,12 +56,12 @@ class _ArrivedPickupCardState extends State<ArrivedPickupCard> {
     return Container(
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.1),
-            blurRadius: 20,
-            offset: const Offset(0, -5),
+            color: PinkAppTheme.primaryPink.withValues(alpha: 0.15),
+            blurRadius: 24,
+            offset: const Offset(0, -6),
           )
         ],
       ),
@@ -78,11 +78,15 @@ class _ArrivedPickupCardState extends State<ArrivedPickupCard> {
                   color: PinkAppTheme.primaryPink.withValues(alpha: 0.1),
                   shape: BoxShape.circle,
                 ),
-                child: const Icon(Icons.pin_drop_rounded, color: PinkAppTheme.primaryPink, size: 52),
+                child: const Icon(
+                  Icons.where_to_vote_rounded,
+                  color: PinkAppTheme.primaryPink,
+                  size: 52,
+                ),
               ),
               const SizedBox(height: 16),
               const Text(
-                "Arrived at Pickup",
+                "Arrived at Destination",
                 style: TextStyle(
                   fontSize: 22,
                   fontWeight: FontWeight.bold,
@@ -91,8 +95,9 @@ class _ArrivedPickupCardState extends State<ArrivedPickupCard> {
               ),
               const SizedBox(height: 8),
               Text(
-                "Ask ${widget.request.riderName} for the 4-digit PIN",
+                "Ask ${widget.request.riderName} for the 4-digit Drop-off PIN",
                 style: const TextStyle(color: PinkAppTheme.textLight, fontSize: 14),
+                textAlign: TextAlign.center,
               ),
               const SizedBox(height: 24),
               TextField(
@@ -123,7 +128,7 @@ class _ArrivedPickupCardState extends State<ArrivedPickupCard> {
                 width: double.infinity,
                 height: 54,
                 child: ElevatedButton(
-                  onPressed: _isLoading ? null : _handleStart,
+                  onPressed: _isLoading ? null : _handleVerify,
                   style: ElevatedButton.styleFrom(
                     backgroundColor: PinkAppTheme.primaryPink,
                     foregroundColor: Colors.white,
@@ -137,7 +142,7 @@ class _ArrivedPickupCardState extends State<ArrivedPickupCard> {
                           child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2.5),
                         )
                       : const Text(
-                          "START TRIP",
+                          "VERIFY & COMPLETE RIDE",
                           style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, letterSpacing: 0.5),
                         ),
                 ),

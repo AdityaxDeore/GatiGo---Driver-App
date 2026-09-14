@@ -9,18 +9,55 @@ import 'features/driver_home/presentation/screens/driver_home_screen.dart';
 import 'features/driver_registration/presentation/screens/driver_registration_screen.dart';
 import 'features/driver_registration/presentation/screens/verification_status_screen.dart';
 
-void main() {
+import 'features/driver_home/domain/services/location_service.dart';
+
+void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   SystemChrome.setSystemUIOverlayStyle(const SystemUiOverlayStyle(
     statusBarColor: Colors.black,
     statusBarIconBrightness: Brightness.light,
     statusBarBrightness: Brightness.dark,
   ));
+
+  // Restore persistent login and approval session
+  await SessionStorage.init();
+
   runApp(const PinkAutoDriverApp());
 }
 
-class PinkAutoDriverApp extends StatelessWidget {
+class PinkAutoDriverApp extends StatefulWidget {
   const PinkAutoDriverApp({super.key});
+
+  @override
+  State<PinkAutoDriverApp> createState() => _PinkAutoDriverAppState();
+}
+
+class _PinkAutoDriverAppState extends State<PinkAutoDriverApp> {
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _checkAndRequestLocationPermission();
+    });
+  }
+
+  Future<void> _checkAndRequestLocationPermission() async {
+    final locationService = LocationService();
+    await locationService.requestPermission();
+  }
+
+  String _getInitialRoute() {
+    if (SessionStorage.isLoggedIn()) {
+      if (SessionStorage.isDriverRegistered()) {
+        return '/home';
+      }
+      if (SessionStorage.isVerificationPending()) {
+        return '/verification-status';
+      }
+      return '/registration';
+    }
+    return '/phone-auth';
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -32,9 +69,7 @@ class PinkAutoDriverApp extends StatelessWidget {
         title: 'Pink Auto Driver',
         debugShowCheckedModeBanner: false,
         theme: PinkAppTheme.lightTheme,
-        initialRoute: SessionStorage.isLoggedIn() 
-            ? (SessionStorage.isDriverRegistered() ? '/home' : '/registration')
-            : '/phone-auth',
+        initialRoute: _getInitialRoute(),
         routes: {
           '/phone-auth': (context) => const PhoneAuthScreen(),
           '/registration': (context) => const DriverRegistrationScreen(),

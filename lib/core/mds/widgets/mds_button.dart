@@ -27,7 +27,12 @@ class MdsButton extends StatelessWidget {
               Icon(icon, size: 18),
               const SizedBox(width: 8),
             ],
-            TranslatedText(text),
+            Flexible(
+              child: TranslatedText(
+                text,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
           ],
         ),
       );
@@ -37,7 +42,12 @@ class MdsButton extends StatelessWidget {
       mainAxisSize: MainAxisSize.min,
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
-        TranslatedText(text),
+        Flexible(
+          child: TranslatedText(
+            text,
+            overflow: TextOverflow.ellipsis,
+          ),
+        ),
         if (icon != null) ...[
           const SizedBox(width: 8),
           Icon(icon, size: 18),

@@ -5,11 +5,13 @@ import 'package:pink_auto/core/storage/session_storage.dart';
 import '../viewmodels/driver_home_viewmodel.dart';
 import '../../domain/models/driver_status.dart';
 import '../../domain/models/trip_state.dart';
-import '../widgets/incoming_ride_request_card.dart';
 import '../widgets/pickup_navigation_card.dart';
 import '../widgets/arrived_pickup_card.dart';
 import '../widgets/dropoff_navigation_card.dart';
+import '../widgets/arrived_destination_card.dart';
 import '../widgets/ride_completed_card.dart';
+import '../widgets/simulated_ride_map_view.dart';
+import 'incoming_ride_screen.dart';
 
 class DriverHomeScreen extends StatelessWidget {
   const DriverHomeScreen({super.key});
@@ -58,13 +60,21 @@ class DriverHomeView extends StatelessWidget {
         child: SafeArea(
           child: Column(
             children: [
-              const UserAccountsDrawerHeader(
-                decoration: BoxDecoration(color: PinkAppTheme.primaryPink),
-                accountName: Text("Driver Profile"),
-                accountEmail: Text("+91 99999 99999"),
-                currentAccountPicture: CircleAvatar(
+              UserAccountsDrawerHeader(
+                decoration: const BoxDecoration(
+                  color: PinkAppTheme.primaryPink,
+                ),
+                accountName: Text(
+                  SessionStorage.getDriverName(),
+                  style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18, color: Colors.white),
+                ),
+                accountEmail: Text(
+                  "${SessionStorage.getDriverPhone()} • ${SessionStorage.getAutoType()} (${SessionStorage.getVehicleNumber()})",
+                  style: const TextStyle(fontSize: 13, color: Colors.white70),
+                ),
+                currentAccountPicture: const CircleAvatar(
                   backgroundColor: Colors.white,
-                  child: Icon(Icons.person, color: PinkAppTheme.primaryPink),
+                  child: Icon(Icons.electric_rickshaw, color: PinkAppTheme.primaryPink, size: 36),
                 ),
               ),
               ListTile(
@@ -99,29 +109,13 @@ class DriverHomeView extends StatelessWidget {
       ),
       body: Stack(
         children: [
-          // Map Background placeholder
-          Container(
-            width: double.infinity,
-            height: double.infinity,
-            color: Colors.grey.shade200,
-            child: Stack(
-              children: [
-                Center(
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      const Icon(Icons.map, size: 64, color: Colors.grey),
-                      const SizedBox(height: 16),
-                      Text(
-                        vm.currentLocation != null
-                            ? "Lat: \${vm.currentLocation!.latitude.toStringAsFixed(4)}, Lng: \${vm.currentLocation!.longitude.toStringAsFixed(4)}"
-                            : "Locating Driver...",
-                        style: const TextStyle(color: Colors.grey, fontSize: 16),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
+          // Animated Simulated Ride Map Canvas
+          Positioned.fill(
+            child: SimulatedRideMapView(
+              tripState: vm.tripState,
+              request: vm.currentRequest,
+              onArrivedAtPickup: () => vm.setReachedPickup(true),
+              onTripCompleted: () => vm.setReachedDestination(true),
             ),
           ),
           // Driver Status Header overlay
@@ -212,9 +206,13 @@ class DriverHomeView extends StatelessWidget {
               child: Container(
                 decoration: BoxDecoration(
                   color: Colors.white,
-                  borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+                  borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
                   boxShadow: [
-                    BoxShadow(color: Colors.black.withValues(alpha: 0.1), blurRadius: 20, offset: const Offset(0, -5))
+                    BoxShadow(
+                      color: PinkAppTheme.primaryPink.withValues(alpha: 0.1),
+                      blurRadius: 24,
+                      offset: const Offset(0, -6),
+                    )
                   ],
                 ),
                 child: SafeArea(
@@ -225,27 +223,57 @@ class DriverHomeView extends StatelessWidget {
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
-                            Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                const Text("Today's Earnings", style: TextStyle(color: Colors.grey)),
-                                const SizedBox(height: 4),
-                                Text("₹0.00", style: Theme.of(context).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold)),
-                              ],
+                            Expanded(
+                              child: Container(
+                                padding: const EdgeInsets.all(14),
+                                decoration: BoxDecoration(
+                                  color: PinkAppTheme.backgroundLight,
+                                  borderRadius: BorderRadius.circular(16),
+                                ),
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    const Text("Today's Earnings", style: TextStyle(color: Colors.black54, fontSize: 12)),
+                                    const SizedBox(height: 4),
+                                    Text(
+                                      "₹0.00",
+                                      style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                                            fontWeight: FontWeight.bold,
+                                            color: PinkAppTheme.textDark,
+                                          ),
+                                    ),
+                                  ],
+                                ),
+                              ),
                             ),
-                            Column(
-                              crossAxisAlignment: CrossAxisAlignment.end,
-                              children: [
-                                const Text("Rides", style: TextStyle(color: Colors.grey)),
-                                const SizedBox(height: 4),
-                                Text("0", style: Theme.of(context).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold)),
-                              ],
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: Container(
+                                padding: const EdgeInsets.all(14),
+                                decoration: BoxDecoration(
+                                  color: PinkAppTheme.backgroundLight,
+                                  borderRadius: BorderRadius.circular(16),
+                                ),
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    const Text("Completed Rides", style: TextStyle(color: Colors.black54, fontSize: 12)),
+                                    const SizedBox(height: 4),
+                                    Text(
+                                      "0",
+                                      style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                                            fontWeight: FontWeight.bold,
+                                            color: PinkAppTheme.primaryPink,
+                                          ),
+                                    ),
+                                  ],
+                                ),
+                              ),
                             ),
                           ],
                         ),
-                        const SizedBox(height: 24),
+                        const SizedBox(height: 20),
                         SizedBox(
                           width: double.infinity,
                           height: 56,
@@ -254,14 +282,36 @@ class DriverHomeView extends StatelessWidget {
                                 ? null
                                 : vm.toggleOnlineStatus,
                             style: ElevatedButton.styleFrom(
-                              backgroundColor: vm.isOnline ? Colors.red : PinkAppTheme.success,
+                              backgroundColor: vm.isOnline ? const Color(0xFF2C2C3E) : PinkAppTheme.primaryPink,
+                              elevation: vm.isOnline ? 2 : 6,
+                              shadowColor: PinkAppTheme.primaryPink.withValues(alpha: 0.4),
                               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(28)),
                             ),
                             child: vm.status == DriverStatus.goingOnline || vm.status == DriverStatus.goingOffline
-                                ? const CircularProgressIndicator(color: Colors.white)
-                                : Text(
-                                    vm.isOnline ? "GO OFFLINE" : "GO ONLINE",
-                                    style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white),
+                                ? const SizedBox(
+                                    width: 24,
+                                    height: 24,
+                                    child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2.5),
+                                  )
+                                : Row(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: [
+                                      Icon(
+                                        vm.isOnline ? Icons.power_settings_new : Icons.bolt,
+                                        color: Colors.white,
+                                        size: 22,
+                                      ),
+                                      const SizedBox(width: 8),
+                                      Text(
+                                        vm.isOnline ? "GO OFFLINE" : "GO ONLINE",
+                                        style: const TextStyle(
+                                          fontSize: 17,
+                                          fontWeight: FontWeight.w900,
+                                          letterSpacing: 1.0,
+                                          color: Colors.white,
+                                        ),
+                                      ),
+                                    ],
                                   ),
                           ),
                         ),
@@ -272,17 +322,14 @@ class DriverHomeView extends StatelessWidget {
               ),
             ),
 
-          // Incoming Ride Request
+          // Dedicated Full-screen Screen popping up for incoming ride requests
           if (vm.tripState == TripState.requestReceived && vm.currentRequest != null)
-            Align(
-              alignment: Alignment.bottomCenter,
-              child: SafeArea(
-                child: IncomingRideRequestCard(
-                  request: vm.currentRequest!,
-                  onAccept: vm.acceptRide,
-                  onReject: vm.rejectRide,
-                  onExpired: vm.handleRequestExpired,
-                ),
+            Positioned.fill(
+              child: IncomingRideScreen(
+                request: vm.currentRequest!,
+                onAccept: vm.acceptRide,
+                onReject: vm.rejectRide,
+                onExpired: vm.handleRequestExpired,
               ),
             ),
 
@@ -292,6 +339,7 @@ class DriverHomeView extends StatelessWidget {
               alignment: Alignment.bottomCenter,
               child: PickupNavigationCard(
                 request: vm.currentRequest!,
+                hasArrived: vm.hasReachedPickup,
                 onArrived: vm.arrivedAtPickup,
               ),
             ),
@@ -312,7 +360,18 @@ class DriverHomeView extends StatelessWidget {
               alignment: Alignment.bottomCenter,
               child: DropoffNavigationCard(
                 request: vm.currentRequest!,
-                onCompleteRide: vm.completeTrip,
+                hasArrived: vm.hasReachedDestination,
+                onCompleteRide: vm.arrivedAtDestination,
+              ),
+            ),
+
+          // Arrived at Destination - Dropoff OTP Verification
+          if (vm.tripState == TripState.arrivedAtDestination && vm.currentRequest != null)
+            Align(
+              alignment: Alignment.bottomCenter,
+              child: ArrivedDestinationCard(
+                request: vm.currentRequest!,
+                onVerifyOtp: vm.completeTripWithOtp,
               ),
             ),
             

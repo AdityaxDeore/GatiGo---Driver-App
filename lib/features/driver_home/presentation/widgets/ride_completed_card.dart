@@ -33,25 +33,49 @@ class RideCompletedCard extends StatelessWidget {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              const Icon(Icons.stars, color: Colors.orange, size: 64),
+              Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: PinkAppTheme.primaryPink.withValues(alpha: 0.1),
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(Icons.check_circle_rounded, color: PinkAppTheme.primaryPink, size: 56),
+              ),
               const SizedBox(height: 16),
-              const Text("Ride Completed!", style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
+              const Text(
+                "Ride Completed!",
+                style: TextStyle(
+                  fontSize: 24,
+                  fontWeight: FontWeight.bold,
+                  color: PinkAppTheme.accentPurple,
+                ),
+              ),
               const SizedBox(height: 8),
-              const Text("Collect cash from the rider", style: TextStyle(color: Colors.grey)),
+              const Text("Collect cash from the rider", style: TextStyle(color: PinkAppTheme.textLight, fontSize: 15)),
               const SizedBox(height: 24),
               Container(
-                padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 32),
+                width: double.infinity,
+                padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 24),
                 decoration: BoxDecoration(
-                  color: Colors.grey.shade100,
-                  borderRadius: BorderRadius.circular(16),
+                  color: PinkAppTheme.backgroundLight,
+                  borderRadius: BorderRadius.circular(20),
+                  border: Border.all(color: PinkAppTheme.primaryPink.withValues(alpha: 0.25)),
                 ),
                 child: Column(
                   children: [
-                    const Text("Total Fare", style: TextStyle(color: Colors.grey, fontSize: 16)),
+                    const Text("Total Fare", style: TextStyle(color: PinkAppTheme.accentPurple, fontSize: 15, fontWeight: FontWeight.w600)),
                     const SizedBox(height: 8),
-                    Text(
-                      "₹\${request.estimatedFare.toStringAsFixed(2)}",
-                      style: const TextStyle(fontSize: 40, fontWeight: FontWeight.bold, color: PinkAppTheme.primaryPink),
+                    FittedBox(
+                      fit: BoxFit.scaleDown,
+                      child: Text(
+                        "₹${request.estimatedFare.toStringAsFixed(2)}",
+                        style: const TextStyle(
+                          fontSize: 38,
+                          fontWeight: FontWeight.w900,
+                          color: PinkAppTheme.primaryPink,
+                          letterSpacing: -0.5,
+                        ),
+                      ),
                     ),
                   ],
                 ),
@@ -59,16 +83,18 @@ class RideCompletedCard extends StatelessWidget {
               const SizedBox(height: 24),
               SizedBox(
                 width: double.infinity,
-                height: 56,
+                height: 54,
                 child: ElevatedButton(
                   onPressed: onDone,
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: PinkAppTheme.success,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(28)),
+                    backgroundColor: PinkAppTheme.primaryPink,
+                    foregroundColor: Colors.white,
+                    elevation: 3,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                   ),
                   child: const Text(
-                    "DONE",
-                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white),
+                    "DONE & READY FOR NEXT RIDE",
+                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, letterSpacing: 0.5),
                   ),
                 ),
               ),

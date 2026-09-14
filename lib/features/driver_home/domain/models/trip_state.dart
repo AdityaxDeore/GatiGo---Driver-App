@@ -5,5 +5,6 @@ enum TripState {
   drivingToPickup,
   arrivedAtPickup,
   tripStarted,
+  arrivedAtDestination,
   completed
 }

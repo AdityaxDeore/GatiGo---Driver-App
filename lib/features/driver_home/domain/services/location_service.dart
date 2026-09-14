@@ -2,16 +2,18 @@ import 'package:geolocator/geolocator.dart';
 import '../models/ride_request.dart';
 
 class LocationService {
-  Future<bool> checkPermissions() async {
-    bool serviceEnabled;
-    LocationPermission permission;
-
-    serviceEnabled = await Geolocator.isLocationServiceEnabled();
-    if (!serviceEnabled) {
-      return false;
+  /// Prompts the user for location access if not already granted.
+  Future<bool> requestPermission() async {
+    LocationPermission permission = await Geolocator.checkPermission();
+    if (permission == LocationPermission.denied) {
+      permission = await Geolocator.requestPermission();
     }
+    return permission == LocationPermission.always ||
+        permission == LocationPermission.whileInUse;
+  }
 
-    permission = await Geolocator.checkPermission();
+  Future<bool> checkPermissions() async {
+    LocationPermission permission = await Geolocator.checkPermission();
     if (permission == LocationPermission.denied) {
       permission = await Geolocator.requestPermission();
       if (permission == LocationPermission.denied) {
@@ -23,6 +25,11 @@ class LocationService {
       return false;
     } 
 
+    bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
+    if (!serviceEnabled) {
+      return false;
+    }
+
     return true;
   }
 
@@ -30,8 +37,30 @@ class LocationService {
     final hasPermission = await checkPermissions();
     if (!hasPermission) return null;
 
-    final position = await Geolocator.getCurrentPosition();
-    return LocationCoordinate(latitude: position.latitude, longitude: position.longitude);
+    try {
+      final lastPos = await Geolocator.getLastKnownPosition();
+      if (lastPos != null) {
+        return LocationCoordinate(
+          latitude: lastPos.latitude,
+          longitude: lastPos.longitude,
+        );
+      }
+
+      final position = await Geolocator.getCurrentPosition(
+        locationSettings: const LocationSettings(
+          timeLimit: Duration(milliseconds: 1500),
+        ),
+      );
+      return LocationCoordinate(
+        latitude: position.latitude,
+        longitude: position.longitude,
+      );
+    } catch (_) {
+      return const LocationCoordinate(
+        latitude: 12.9716,
+        longitude: 77.5946,
+      );
+    }
   }
 
   Stream<LocationCoordinate> getLocationStream() {
