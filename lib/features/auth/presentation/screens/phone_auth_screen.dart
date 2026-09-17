@@ -49,10 +49,7 @@ class _PhoneAuthScreenState extends State<PhoneAuthScreen> {
 
   void _showSnackBar(String message, Color color) {
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: TranslatedText(message),
-        backgroundColor: color,
-      ),
+      SnackBar(content: TranslatedText(message), backgroundColor: color),
     );
   }
 
@@ -75,11 +72,7 @@ class _PhoneAuthScreenState extends State<PhoneAuthScreen> {
           phone: phone.isNotEmpty ? '+91 $phone' : null,
         );
         if (mounted) {
-          if (isRegistered) {
-            Navigator.pushReplacementNamed(context, '/home');
-          } else {
-            Navigator.pushReplacementNamed(context, '/registration');
-          }
+          Navigator.pushReplacementNamed(context, isRegistered ? '/home' : '/registration');
         }
       },
     );

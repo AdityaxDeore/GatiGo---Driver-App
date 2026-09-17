@@ -1,55 +1,65 @@
 # ==============================================================================
-# GatiGo Driver App .gitignore
+# GatiGo Driver App (Flutter) .gitignore
 # ==============================================================================
 
-# Miscellaneous
+# OS & Temporary
+.DS_Store
+.DS_Store?
+._*
+Thumbs.db
+ehthumbs.db
+desktop.ini
 *.class
 *.log
 *.pyc
 *.swp
-.DS_Store
-.atom/
-.build/
-.buildlog/
-.history
-.svn/
-.swiftpm/
-migrate_working_dir/
+*.bak
+*~
 
-# IntelliJ & VS Code
+# IDEs & Editors
+.idea/
+.vscode/
 *.iml
 *.ipr
 *.iws
-.idea/
-.vscode/
 
-# Flutter / Dart
-**/doc/api/
-**/ios/Flutter/.last_build_id
+# Flutter / Dart Build & Cache Artifacts
 .dart_tool/
 .flutter-plugins
 .flutter-plugins-dependencies
-.pub-cache/
+.packages
 .pub/
+.pub-cache/
 /build/
 /coverage/
+**/doc/api/
+**/ios/Flutter/.last_build_id
+.widget_preview/
 
 # Symbolication & Obfuscation
 app.*.symbols
 app.*.map.json
 
-# Android Studio Build Artifacts
+# Android Studio & Gradle
 /android/app/debug
 /android/app/profile
 /android/app/release
+.gradle/
+local.properties
 
-# Widget Preview Cache
-.widget_preview/
+# iOS Build & CocoaPods
+/ios/Pods/
+/ios/.symlinks/
+/ios/Flutter/Flutter.framework
+/ios/Flutter/Flutter.podspec
+DerivedData/
 
-# Sensitive Keys & Credentials
-*.keystore
-*.jks
-key.properties
+# Environment Variables & Sensitive Credentials
 .env
 .env.*
 !.env.example
+*.keystore
+*.jks
+key.properties
+google-services-private.json
+GoogleService-Info-private.plist

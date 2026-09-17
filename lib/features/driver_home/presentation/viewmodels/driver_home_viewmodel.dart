@@ -5,10 +5,14 @@ import '../../domain/models/trip_state.dart';
 import '../../domain/models/ride_request.dart';
 import '../../domain/services/location_service.dart';
 import '../../domain/services/ride_service.dart';
+import '../../../../core/services/driver_api_service.dart';
+import 'driver_trip_actions.dart';
 
 class DriverHomeViewModel extends ChangeNotifier {
   final LocationService _locationService = LocationService();
   final RideService _rideService = RideService();
+  final DriverApiService _apiService = DriverApiService();
+  late final DriverTripActions _tripActions = DriverTripActions(_apiService);
 
   DriverStatus _status = DriverStatus.offline;
   TripState _tripState = TripState.available;
@@ -28,12 +32,9 @@ class DriverHomeViewModel extends ChangeNotifier {
   String? get errorMessage => _errorMessage;
   bool get hasReachedPickup => _hasReachedPickup;
   bool get hasReachedDestination => _hasReachedDestination;
-
   bool get isOnline => _status == DriverStatus.online;
 
-  DriverHomeViewModel() {
-    _init();
-  }
+  DriverHomeViewModel() { _init(); }
 
   Future<void> _init() async {
     final hasPerm = await _locationService.checkPermissions();
@@ -41,40 +42,30 @@ class DriverHomeViewModel extends ChangeNotifier {
       _currentLocation = await _locationService.getCurrentLocation();
       notifyListeners();
     }
-
     _rideSub = _rideService.incomingRequests.listen((request) {
       if (request != null && _tripState == TripState.available) {
         _currentRequest = request;
         _tripState = TripState.requestReceived;
-        notifyListeners();
       } else if (request == null && _tripState == TripState.requestReceived) {
         _currentRequest = null;
         _tripState = TripState.available;
-        notifyListeners();
       }
+      notifyListeners();
     });
   }
 
   Future<void> toggleOnlineStatus() async {
     if (_status == DriverStatus.goingOnline || _status == DriverStatus.goingOffline) return;
-
     if (!isOnline) {
       _status = DriverStatus.goingOnline;
       _errorMessage = null;
       notifyListeners();
 
       final hasPerm = await _locationService.checkPermissions();
-      if (!hasPerm) {
-        _status = DriverStatus.error;
-        _errorMessage = "Location permission is required to go online.";
-        notifyListeners();
-        return;
-      }
-
       _currentLocation ??= await _locationService.getCurrentLocation();
-      if (_currentLocation == null) {
+      if (!hasPerm || _currentLocation == null) {
         _status = DriverStatus.error;
-        _errorMessage = "Could not determine location.";
+        _errorMessage = !hasPerm ? "Location permission required." : "Location unavailable.";
         notifyListeners();
         return;
       }
@@ -83,105 +74,89 @@ class DriverHomeViewModel extends ChangeNotifier {
       if (success) {
         _status = DriverStatus.online;
         _tripState = TripState.available;
-        
-        // Start tracking location
         _locationSub = _locationService.getLocationStream().listen((loc) {
           _currentLocation = loc;
           notifyListeners();
         });
       } else {
         _status = DriverStatus.error;
-        _errorMessage = "Failed to go online.";
+        _errorMessage = "Failed to go online on server.";
       }
-      notifyListeners();
     } else {
       _status = DriverStatus.goingOffline;
       notifyListeners();
-
-      final success = await _rideService.setOnlineStatus(false, _currentLocation!);
-      if (success) {
-        _status = DriverStatus.offline;
-        _tripState = TripState.available;
-        _currentRequest = null;
-        _locationSub?.cancel();
-      } else {
-        _status = DriverStatus.error;
-        _errorMessage = "Failed to go offline.";
-      }
-      notifyListeners();
+      await _rideService.setOnlineStatus(false, _currentLocation ?? const LocationCoordinate(latitude: 0, longitude: 0));
+      _status = DriverStatus.offline;
+      _tripState = TripState.available;
+      _currentRequest = null;
+      _locationSub?.cancel();
     }
+    notifyListeners();
   }
 
   void handleRequestExpired() {
-    if (_tripState == TripState.requestReceived) {
+    if (_tripState == TripState.requestReceived && _currentRequest != null) {
+      final reqId = _currentRequest!.id;
       _tripState = TripState.available;
       _currentRequest = null;
       notifyListeners();
-      if (_currentLocation != null) {
-        _rideService.rejectRequest('expired', _currentLocation!);
-      }
+      if (_currentLocation != null) _rideService.rejectRequest(reqId, _currentLocation!);
     }
   }
 
   Future<void> acceptRide() async {
     if (_currentRequest == null) return;
-    
     final success = await _rideService.acceptRequest(_currentRequest!.id);
     if (success) {
       _hasReachedPickup = false;
       _hasReachedDestination = false;
       _tripState = TripState.drivingToPickup;
-      notifyListeners();
     } else {
       _errorMessage = "Ride no longer available.";
       _tripState = TripState.available;
       _currentRequest = null;
-      notifyListeners();
     }
-  }
-
-  void setReachedPickup(bool reached) {
-    if (_hasReachedPickup != reached) {
-      _hasReachedPickup = reached;
-      notifyListeners();
-    }
-  }
-
-  void setReachedDestination(bool reached) {
-    if (_hasReachedDestination != reached) {
-      _hasReachedDestination = reached;
-      notifyListeners();
-    }
+    notifyListeners();
   }
 
   Future<void> rejectRide() async {
     if (_currentRequest == null || _currentLocation == null) return;
-    
-    _tripState = TripState.available;
     final reqId = _currentRequest!.id;
+    _tripState = TripState.available;
     _currentRequest = null;
     notifyListeners();
-
     await _rideService.rejectRequest(reqId, _currentLocation!);
   }
 
-  void arrivedAtPickup() {
-    if (_tripState == TripState.drivingToPickup) {
+  void setReachedPickup(bool reached) {
+    if (_hasReachedPickup != reached) { _hasReachedPickup = reached; notifyListeners(); }
+  }
+
+  void setReachedDestination(bool reached) {
+    if (_hasReachedDestination != reached) { _hasReachedDestination = reached; notifyListeners(); }
+  }
+
+  Future<void> arrivedAtPickup() async {
+    if (_tripState == TripState.drivingToPickup && _currentRequest != null) {
       _hasReachedPickup = true;
       _tripState = TripState.arrivedAtPickup;
       notifyListeners();
+      await _tripActions.markArrived(_currentRequest!.id);
     }
   }
 
   Future<bool> startTrip(String otp) async {
-    // Universal 4-digit OTP validation
-    if (RegExp(r'^\d{4}$').hasMatch(otp.trim())) {
+    if (_currentRequest == null) return false;
+    final ok = await _tripActions.startTripWithOtp(_currentRequest!.id, otp);
+    if (ok) {
       _hasReachedDestination = false;
       _tripState = TripState.tripStarted;
-      notifyListeners();
-      return true;
+      _errorMessage = null;
+    } else {
+      _errorMessage = "Invalid OTP. Please verify with rider.";
     }
-    return false;
+    notifyListeners();
+    return ok;
   }
 
   void arrivedAtDestination() {
@@ -193,28 +168,23 @@ class DriverHomeViewModel extends ChangeNotifier {
   }
 
   Future<bool> completeTripWithOtp(String otp) async {
-    // Universal 4-digit Drop-off OTP validation
-    if (RegExp(r'^\d{4}$').hasMatch(otp.trim())) {
+    if (_currentRequest == null) return false;
+    final ok = await _tripActions.completeTripWithOtp(_currentRequest!.id, otp);
+    if (ok) {
       _tripState = TripState.completed;
-      notifyListeners();
-      return true;
-    }
-    return false;
-  }
-
-  void completeTrip() {
-    if (_tripState == TripState.tripStarted || _tripState == TripState.arrivedAtDestination) {
-      _tripState = TripState.completed;
+      _errorMessage = null;
       notifyListeners();
     }
+    return ok;
   }
 
   void resetToOnline() {
-    if (_tripState == TripState.completed && _currentLocation != null) {
+    if (_tripState == TripState.completed) {
       _tripState = TripState.available;
       _currentRequest = null;
+      _hasReachedPickup = false;
+      _hasReachedDestination = false;
       notifyListeners();
-      _rideService.setOnlineStatus(true, _currentLocation!); // trigger next mock request
     }
   }
 
@@ -222,6 +192,7 @@ class DriverHomeViewModel extends ChangeNotifier {
   void dispose() {
     _locationSub?.cancel();
     _rideSub?.cancel();
+    _rideService.dispose();
     super.dispose();
   }
 }
