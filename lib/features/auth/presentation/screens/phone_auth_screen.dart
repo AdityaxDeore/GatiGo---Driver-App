@@ -1,11 +1,12 @@
 import 'package:flutter/material.dart';
-import '../../../../core/mds/widgets/mds_button.dart';
-import '../../../../core/mds/widgets/mds_otp_input.dart';
-import '../../../../core/mds/widgets/mds_phone_input_field.dart';
 import '../../../../core/theme/theme.dart';
 import '../../../../core/localization/translated_text.dart';
 import '../../../../core/storage/session_storage.dart';
 import '../viewmodels/phone_auth_viewmodel.dart';
+import '../widgets/driver_auth_header.dart';
+import '../widgets/driver_auth_input_switcher.dart';
+import '../widgets/driver_auth_logo.dart';
+import '../widgets/driver_auth_timer.dart';
 
 class PhoneAuthScreen extends StatefulWidget {
   const PhoneAuthScreen({super.key});
@@ -67,14 +68,12 @@ class _PhoneAuthScreenState extends State<PhoneAuthScreen> {
       onError: (message) => _showSnackBar(message, PinkAppTheme.error),
       onSuccess: (isRegistered) async {
         _showSnackBar("Authentication Successful!", PinkAppTheme.success);
-        
         final phone = _viewModel.phoneController.text.trim();
         await SessionStorage.login(
           'mock-jwt-token-value-xyz',
           isRegistered: isRegistered,
           phone: phone.isNotEmpty ? '+91 $phone' : null,
         );
-        
         if (mounted) {
           if (isRegistered) {
             Navigator.pushReplacementNamed(context, '/home');
@@ -84,125 +83,6 @@ class _PhoneAuthScreenState extends State<PhoneAuthScreen> {
         }
       },
     );
-  }
-
-  Widget _buildHeader(TextTheme textTheme) {
-    switch (_viewModel.currentStep) {
-      case AuthState.enteringPhone:
-        return Column(
-          key: const ValueKey(AuthState.enteringPhone),
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            TranslatedText(
-              "Enter your mobile number",
-              style: textTheme.headlineSmall?.copyWith(
-                fontWeight: FontWeight.w900,
-                color: PinkAppTheme.textDark,
-              ),
-              textAlign: TextAlign.center,
-            ),
-            const SizedBox(height: 12),
-            TranslatedText(
-              "We will send you a 4-digit verification code.",
-              style: textTheme.bodyMedium?.copyWith(color: PinkAppTheme.textLight),
-              textAlign: TextAlign.center,
-            ),
-          ],
-        );
-      case AuthState.enteringOtp:
-        return Column(
-          key: const ValueKey(AuthState.enteringOtp),
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            TranslatedText(
-              "Enter confirmation code",
-              style: textTheme.headlineSmall?.copyWith(
-                fontWeight: FontWeight.w900,
-                color: PinkAppTheme.textDark,
-              ),
-              textAlign: TextAlign.center,
-            ),
-            const SizedBox(height: 12),
-            TranslatedText(
-              "A verification code has been successfully dispatched to +91 ${_viewModel.phoneController.text}",
-              style: textTheme.bodyMedium?.copyWith(color: PinkAppTheme.textLight),
-              textAlign: TextAlign.center,
-            ),
-          ],
-        );
-    }
-  }
-
-  Widget _buildInput() {
-    switch (_viewModel.currentStep) {
-      case AuthState.enteringPhone:
-        return MdsPhoneInputField(
-          key: const ValueKey(AuthState.enteringPhone),
-          controller: _viewModel.phoneController,
-          errorText: _viewModel.phoneError,
-          onSubmitted: (_) => _sendOtp(),
-        );
-      case AuthState.enteringOtp:
-        return MdsOtpInput(
-          key: const ValueKey(AuthState.enteringOtp),
-          controllers: _viewModel.otpControllers,
-          focusNodes: _viewModel.otpFocusNodes,
-          onChanged: (code) {
-            if (code.length == 4) {
-              _verifyOtp();
-            }
-          },
-        );
-    }
-  }
-
-  Widget _buildTimer(TextTheme textTheme) {
-    if (_viewModel.currentStep != AuthState.enteringOtp) {
-      return const SizedBox.shrink(key: ValueKey('empty_timer'));
-    }
-    return Padding(
-      key: const ValueKey('otp_timer'),
-      padding: const EdgeInsets.only(top: 24.0),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          TranslatedText(
-            !_viewModel.canResendOtp
-                ? "Resend code in ${_viewModel.resendTimerSeconds}s"
-                : "Didn't receive the code? ",
-            style: textTheme.bodyMedium,
-          ),
-          if (_viewModel.canResendOtp)
-            GestureDetector(
-              onTap: _viewModel.startTimer,
-              child: TranslatedText(
-                "Resend OTP",
-                style: textTheme.bodyMedium?.copyWith(
-                  color: PinkAppTheme.primaryPink,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-            ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildButton() {
-    switch (_viewModel.currentStep) {
-      case AuthState.enteringPhone:
-        return MdsButton(
-          key: const ValueKey('phone_btn'),
-          text: "Send Verification Code",
-          onPressed: _sendOtp,
-        );
-      case AuthState.enteringOtp:
-        return MdsButton(
-          key: const ValueKey('otp_btn'),
-          text: "Verify & Proceed",
-          onPressed: _verifyOtp,
-        );
-    }
   }
 
   @override
@@ -231,7 +111,7 @@ class _PhoneAuthScreenState extends State<PhoneAuthScreen> {
                 colors: [
                   PinkAppTheme.accentPurple.withValues(alpha: 0.06),
                   PinkAppTheme.primaryPink.withValues(alpha: 0.03),
-                  Colors.white
+                  Colors.white,
                 ],
                 begin: Alignment.topCenter,
                 end: Alignment.bottomCenter,
@@ -263,61 +143,50 @@ class _PhoneAuthScreenState extends State<PhoneAuthScreen> {
                         crossAxisAlignment: CrossAxisAlignment.stretch,
                         children: [
                           const SizedBox(height: 10),
-                          // Logo Badge
-                          Center(
-                            child: Container(
-                              height: 120,
-                              width: 120,
-                              decoration: BoxDecoration(
-                                shape: BoxShape.circle,
-                                color: Colors.white,
-                                border: Border.all(
-                                  color: PinkAppTheme.primaryPink.withValues(alpha: 0.2),
-                                  width: 4,
-                                ),
-                                boxShadow: [
-                                  BoxShadow(
-                                    color: PinkAppTheme.primaryPink.withValues(alpha: 0.15),
-                                    blurRadius: 16,
-                                    offset: const Offset(0, 8),
-                                  ),
-                                ],
-                              ),
-                              child: ClipOval(
-                                child: Image.asset(
-                                  'assets/images/logo_new.png',
-                                  fit: BoxFit.cover,
-                                ),
-                              ),
+                          const DriverAuthLogo(),
+                          const SizedBox(height: 28),
+                          AnimatedSwitcher(
+                            duration: const Duration(milliseconds: 250),
+                            child: DriverAuthHeader(
+                              currentStep: _viewModel.currentStep,
+                              phone: _viewModel.phoneController.text,
+                              textTheme: textTheme,
                             ),
                           ),
-                          const SizedBox(height: 28),
-                          
-                          // Header texts
+                          const SizedBox(height: 32),
                           AnimatedSwitcher(
                             duration: const Duration(milliseconds: 250),
-                            child: _buildHeader(textTheme),
+                            child: DriverAuthInputSwitcher(
+                              currentStep: _viewModel.currentStep,
+                              phoneController: _viewModel.phoneController,
+                              phoneError: _viewModel.phoneError,
+                              onPhoneSubmitted: _sendOtp,
+                              otpControllers: _viewModel.otpControllers,
+                              otpFocusNodes: _viewModel.otpFocusNodes,
+                              onOtpChanged: (code) {
+                                if (code.length == 4) _verifyOtp();
+                              },
+                            ),
+                          ),
+                          AnimatedSwitcher(
+                            duration: const Duration(milliseconds: 250),
+                            child: DriverAuthTimer(
+                              currentStep: _viewModel.currentStep,
+                              canResendOtp: _viewModel.canResendOtp,
+                              resendTimerSeconds: _viewModel.resendTimerSeconds,
+                              onResend: _viewModel.startTimer,
+                              textTheme: textTheme,
+                            ),
                           ),
                           const SizedBox(height: 32),
-
-                          // Inputs
-                          AnimatedSwitcher(
-                            duration: const Duration(milliseconds: 250),
-                            child: _buildInput(),
-                          ),
-
-                          // Optional resend timer
-                          AnimatedSwitcher(
-                            duration: const Duration(milliseconds: 250),
-                            child: _buildTimer(textTheme),
-                          ),
-                          const SizedBox(height: 32),
-
-                          // Center primary action button
                           Center(
                             child: AnimatedSwitcher(
                               duration: const Duration(milliseconds: 200),
-                              child: _buildButton(),
+                              child: DriverAuthActionButton(
+                                currentStep: _viewModel.currentStep,
+                                onSendOtp: _sendOtp,
+                                onVerifyOtp: _verifyOtp,
+                              ),
                             ),
                           ),
                           const SizedBox(height: 10),

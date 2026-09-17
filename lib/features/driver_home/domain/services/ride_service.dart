@@ -1,8 +1,10 @@
 import 'dart:async';
+import '../../../../core/services/driver_api_service.dart';
 import '../models/ride_request.dart';
 import '../models/driver_status.dart';
 
 class RideService {
+  final DriverApiService _apiService = DriverApiService();
   DriverStatus _currentStatus = DriverStatus.offline;
   Timer? _mockRequestTimer;
   final StreamController<RideRequest?> _requestStreamController = StreamController.broadcast();
@@ -10,7 +12,10 @@ class RideService {
   Stream<RideRequest?> get incomingRequests => _requestStreamController.stream;
 
   Future<bool> setOnlineStatus(bool isOnline, LocationCoordinate currentLoc) async {
-    // Fast simulated handshake
+    // Notify live GCP backend
+    _apiService.setDutyStatus(isOnline);
+
+    // Fast responsive handshake
     await Future.delayed(const Duration(milliseconds: 150));
     _currentStatus = isOnline ? DriverStatus.online : DriverStatus.offline;
 
@@ -56,9 +61,11 @@ class RideService {
   }
 
   Future<bool> acceptRequest(String requestId) async {
-    // Mock backend assigning the ride
+    // Notify live backend
+    _apiService.updateTripStatus(rideId: requestId, status: 'accepted');
+
+    // Fast simulated handshake
     await Future.delayed(const Duration(milliseconds: 800));
-    // Assume success for now, in real life check if still available
     _stopMockRequestGenerator();
     _requestStreamController.add(null);
     return true;
