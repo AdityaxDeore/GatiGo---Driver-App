@@ -155,4 +155,32 @@ class DriverApiService {
       return null;
     }
   }
+
+  // 9. Auth & Registration Verification
+  Future<Map<String, dynamic>> requestOtp({required String phoneNumber}) async {
+    try {
+      final res = await _client.post('/api/v1/auth/request-otp', body: {'phone_number': phoneNumber, 'role': 'driver'});
+      return res is Map<String, dynamic> ? res : {'success': false, 'error': 'Invalid response'};
+    } catch (e) {
+      return {'success': false, 'error': e.toString()};
+    }
+  }
+
+  Future<Map<String, dynamic>> verifyOtp({required String phoneNumber, required String otp}) async {
+    try {
+      final res = await _client.post('/api/v1/auth/verify-otp', body: {'phone_number': phoneNumber, 'otp': otp, 'role': 'driver'});
+      return res is Map<String, dynamic> ? res : {'success': false, 'error': 'Invalid response'};
+    } catch (e) {
+      return {'success': false, 'error': e.toString()};
+    }
+  }
+
+  Future<Map<String, dynamic>?> getRegistrationStatus() async {
+    try {
+      final res = await _client.get('/api/v1/drivers/me/registration-status');
+      return res is Map<String, dynamic> ? (res['data'] ?? res) : null;
+    } catch (_) {
+      return null;
+    }
+  }
 }

@@ -11,7 +11,7 @@ class MdsOtpInput extends StatelessWidget {
     super.key,
     required this.controllers,
     required this.focusNodes,
-    this.length = 4,
+    this.length = 6,
     this.onChanged,
   }) : assert(controllers.length == length && focusNodes.length == length,
             'Controllers and focusNodes length must match length parameter');
@@ -22,7 +22,7 @@ class MdsOtpInput extends StatelessWidget {
       mainAxisAlignment: MainAxisAlignment.spaceEvenly,
       children: List.generate(length, (index) {
         return SizedBox(
-          width: 60,
+          width: 46,
           child: TextField(
             controller: controllers[index],
             focusNode: focusNodes[index],

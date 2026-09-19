@@ -2,9 +2,41 @@ import 'package:flutter/material.dart';
 import '../../../../core/theme/theme.dart';
 import '../../../../core/mds/widgets/mds_button.dart';
 import '../../../../core/storage/session_storage.dart';
+import '../../../../core/services/driver_api_service.dart';
 
-class VerificationStatusScreen extends StatelessWidget {
+class VerificationStatusScreen extends StatefulWidget {
   const VerificationStatusScreen({super.key});
+
+  @override
+  State<VerificationStatusScreen> createState() => _VerificationStatusScreenState();
+}
+
+class _VerificationStatusScreenState extends State<VerificationStatusScreen> {
+  bool _isLoading = false;
+
+  Future<void> _checkStatus() async {
+    setState(() => _isLoading = true);
+    try {
+      final status = await DriverApiService().getRegistrationStatus();
+      if (!mounted) return;
+      if (status != null && status['is_approved'] == true) {
+        await SessionStorage.approveDriver();
+        if (mounted) Navigator.pushReplacementNamed(context, '/home');
+        return;
+      }
+      final reason = status?['rejection_reason'];
+      final vStatus = status?['verification_status'] ?? 'pending';
+      final isRej = vStatus == 'rejected';
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+        content: Text(isRej ? "Application rejected: ${reason ?? 'Contact support'}" : "Application is under review ($vStatus)."),
+        backgroundColor: isRej ? Colors.red : PinkAppTheme.primaryPink,
+      ));
+    } catch (e) {
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error: $e')));
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -140,14 +172,8 @@ class VerificationStatusScreen extends StatelessWidget {
                     ),
                     const SizedBox(height: 36),
                     MdsButton(
-                      text: "Check Verification Status",
-                      onPressed: () async {
-                        // Mock approval for demo
-                        await SessionStorage.approveDriver();
-                        if (context.mounted) {
-                          Navigator.pushReplacementNamed(context, '/home');
-                        }
-                      },
+                      text: _isLoading ? "Checking..." : "Check Verification Status",
+                      onPressed: _isLoading ? null : _checkStatus,
                     ),
                   ],
                 ),

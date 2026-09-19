@@ -16,9 +16,9 @@ class SessionStorage {
   static bool _isVerificationPending = false;
   static String? _authToken;
   static String? _profileImageUrl;
-  static String _driverName = 'Sunita Sharma';
-  static String _driverPhone = '+91 99999 99999';
-  static String _vehicleNumber = 'KA 01 EQ 4521';
+  static String _driverName = 'Driver';
+  static String _driverPhone = '';
+  static String _vehicleNumber = '';
   static String _autoType = 'Pink Auto';
 
   static Future<void> init() async {
@@ -28,9 +28,9 @@ class SessionStorage {
     _isVerificationPending = prefs.getBool(_keyIsVerificationPending) ?? false;
     _authToken = prefs.getString(_keyAuthToken);
     _profileImageUrl = prefs.getString(_keyProfileImageUrl);
-    _driverName = prefs.getString(_keyDriverName) ?? 'Sunita Sharma';
-    _driverPhone = prefs.getString(_keyDriverPhone) ?? '+91 99999 99999';
-    _vehicleNumber = prefs.getString(_keyVehicleNumber) ?? 'KA 01 EQ 4521';
+    _driverName = prefs.getString(_keyDriverName) ?? 'Driver';
+    _driverPhone = prefs.getString(_keyDriverPhone) ?? '';
+    _vehicleNumber = prefs.getString(_keyVehicleNumber) ?? '';
     _autoType = prefs.getString(_keyAutoType) ?? 'Pink Auto';
   }
 
@@ -131,6 +131,10 @@ class SessionStorage {
     _isVerificationPending = false;
     _authToken = null;
     _profileImageUrl = null;
+    _driverName = 'Driver';
+    _driverPhone = '';
+    _vehicleNumber = '';
+    _autoType = 'Auto';
 
     final prefs = await SharedPreferences.getInstance();
     await prefs.remove(_keyIsLoggedIn);
@@ -138,6 +142,10 @@ class SessionStorage {
     await prefs.remove(_keyIsVerificationPending);
     await prefs.remove(_keyAuthToken);
     await prefs.remove(_keyProfileImageUrl);
+    await prefs.remove(_keyDriverName);
+    await prefs.remove(_keyDriverPhone);
+    await prefs.remove(_keyVehicleNumber);
+    await prefs.remove(_keyAutoType);
   }
 
   static Future<void> saveProfileImage(String url) async {

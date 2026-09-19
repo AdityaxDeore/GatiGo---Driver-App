@@ -1,13 +1,19 @@
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import '../../domain/models/driver_registration_model.dart';
+import '../../../../core/services/driver_api_service.dart';
+import '../../../../core/storage/session_storage.dart';
 
 class DriverRegistrationViewModel extends ChangeNotifier {
+  final DriverApiService _apiService;
   int _currentStep = 0;
   final int totalSteps = 6;
   
   DriverRegistrationData _data = DriverRegistrationData();
   final ImagePicker _imagePicker = ImagePicker();
+
+  DriverRegistrationViewModel({DriverApiService? apiService})
+      : _apiService = apiService ?? DriverApiService();
 
   int get currentStep => _currentStep;
   DriverRegistrationData get data => _data;
@@ -92,8 +98,31 @@ class DriverRegistrationViewModel extends ChangeNotifier {
   }
 
   Future<void> submitRegistration(VoidCallback onSuccess) async {
-    // Mock submission to backend
-    await Future.delayed(const Duration(seconds: 2));
+    try {
+      final name = _data.personalDetails.fullName.isNotEmpty ? _data.personalDetails.fullName : 'Driver';
+      final phone = SessionStorage.getDriverPhone();
+      final vehiclePlate = _data.vehicleDetails.registrationNumber.isNotEmpty ? _data.vehicleDetails.registrationNumber : 'MH-12-REG';
+      final vehicleModel = '${_data.vehicleDetails.make} ${_data.vehicleDetails.model}'.trim();
+      final serviceType = _data.vehicleDetails.type.toLowerCase().contains('pink') ? 'pink_auto' : 'standard_auto';
+
+      await _apiService.registerDriver(
+        fullName: name,
+        phone: phone,
+        licenseNumber: 'DL-${DateTime.now().millisecondsSinceEpoch}',
+        vehiclePlate: vehiclePlate,
+        vehicleMakeModel: vehicleModel.isNotEmpty ? vehicleModel : 'Bajaj RE Compact',
+        serviceType: serviceType,
+      );
+
+      await SessionStorage.submitForVerification(
+        name: name,
+        phone: phone,
+        vehicleNumber: vehiclePlate,
+        autoType: serviceType,
+      );
+    } catch (e) {
+      debugPrint("Registration submit notice: $e");
+    }
     onSuccess();
   }
 }

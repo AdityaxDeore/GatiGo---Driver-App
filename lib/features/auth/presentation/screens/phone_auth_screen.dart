@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../../core/network/api_client.dart';
 import '../../../../core/theme/theme.dart';
 import '../../../../core/localization/translated_text.dart';
 import '../../../../core/storage/session_storage.dart';
@@ -63,16 +64,18 @@ class _PhoneAuthScreenState extends State<PhoneAuthScreen> {
   void _verifyOtp() {
     _viewModel.verifyOtp(
       onError: (message) => _showSnackBar(message, PinkAppTheme.error),
-      onSuccess: (isRegistered) async {
+      onSuccess: (authData) async {
         _showSnackBar("Authentication Successful!", PinkAppTheme.success);
+        final token = authData['token'] as String? ?? '';
+        final user = authData['user'] as Map<String, dynamic>? ?? {};
+        final isReg = user['is_registered'] == true;
+        final isApp = user['is_approved'] == true;
         final phone = _viewModel.phoneController.text.trim();
-        await SessionStorage.login(
-          'mock-jwt-token-value-xyz',
-          isRegistered: isRegistered,
-          phone: phone.isNotEmpty ? '+91 $phone' : null,
-        );
+        await SessionStorage.login(token, isRegistered: isReg, phone: phone.isNotEmpty ? '+91 $phone' : null);
+        if (token.isNotEmpty) ApiClient().setAuthToken(token);
         if (mounted) {
-          Navigator.pushReplacementNamed(context, isRegistered ? '/home' : '/registration');
+          final target = !isReg ? '/registration' : (isApp ? '/home' : '/verification-status');
+          Navigator.pushReplacementNamed(context, target);
         }
       },
     );
@@ -101,13 +104,8 @@ class _PhoneAuthScreenState extends State<PhoneAuthScreen> {
           body: Container(
             decoration: BoxDecoration(
               gradient: LinearGradient(
-                colors: [
-                  PinkAppTheme.accentPurple.withValues(alpha: 0.06),
-                  PinkAppTheme.primaryPink.withValues(alpha: 0.03),
-                  Colors.white,
-                ],
-                begin: Alignment.topCenter,
-                end: Alignment.bottomCenter,
+                colors: [PinkAppTheme.accentPurple.withValues(alpha: 0.06), PinkAppTheme.primaryPink.withValues(alpha: 0.03), Colors.white],
+                begin: Alignment.topCenter, end: Alignment.bottomCenter,
               ),
             ),
             child: SafeArea(
@@ -119,13 +117,7 @@ class _PhoneAuthScreenState extends State<PhoneAuthScreen> {
                     decoration: BoxDecoration(
                       color: Colors.white,
                       borderRadius: BorderRadius.circular(28),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withValues(alpha: 0.05),
-                          blurRadius: 20,
-                          offset: const Offset(0, 10),
-                        ),
-                      ],
+                      boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 20, offset: const Offset(0, 10))],
                     ),
                     padding: const EdgeInsets.all(28.0),
                     child: AnimatedSize(
@@ -157,7 +149,7 @@ class _PhoneAuthScreenState extends State<PhoneAuthScreen> {
                               otpControllers: _viewModel.otpControllers,
                               otpFocusNodes: _viewModel.otpFocusNodes,
                               onOtpChanged: (code) {
-                                if (code.length == 4) _verifyOtp();
+                                if (code.length == 6) _verifyOtp();
                               },
                             ),
                           ),
