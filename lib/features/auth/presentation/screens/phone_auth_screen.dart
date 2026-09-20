@@ -57,7 +57,7 @@ class _PhoneAuthScreenState extends State<PhoneAuthScreen> {
   void _sendOtp() {
     _viewModel.sendOtp(
       onError: (message) => _showSnackBar(message, PinkAppTheme.error),
-      onSuccess: () {},
+      onSuccess: () => _showSnackBar("Code sent! (Dev test OTP: 123456)", PinkAppTheme.primaryPink),
     );
   }
 

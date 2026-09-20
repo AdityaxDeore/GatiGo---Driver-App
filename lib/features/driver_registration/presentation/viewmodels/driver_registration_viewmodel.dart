@@ -42,22 +42,32 @@ class DriverRegistrationViewModel extends ChangeNotifier {
     notifyListeners();
   }
 
-  Future<String?> takePhoto() async {
+  Future<String?> takePhoto({bool isDocument = true}) async {
     try {
-      final XFile? photo = await _imagePicker.pickImage(source: ImageSource.camera);
+      final XFile? photo = await _imagePicker.pickImage(
+        source: ImageSource.camera,
+        maxWidth: isDocument ? 1280 : 512,
+        maxHeight: isDocument ? 1280 : 512,
+        imageQuality: isDocument ? 80 : 85,
+      );
       return photo?.path;
     } catch (e) {
-      debugPrint("Error taking photo: \$e");
+      debugPrint("Error taking photo: $e");
       return null;
     }
   }
 
-  Future<String?> pickDocument() async {
+  Future<String?> pickDocument({bool isDocument = true}) async {
     try {
-      final XFile? photo = await _imagePicker.pickImage(source: ImageSource.gallery);
+      final XFile? photo = await _imagePicker.pickImage(
+        source: ImageSource.gallery,
+        maxWidth: isDocument ? 1280 : 512,
+        maxHeight: isDocument ? 1280 : 512,
+        imageQuality: isDocument ? 80 : 85,
+      );
       return photo?.path;
     } catch (e) {
-      debugPrint("Error picking document: \$e");
+      debugPrint("Error picking document: $e");
       return null;
     }
   }

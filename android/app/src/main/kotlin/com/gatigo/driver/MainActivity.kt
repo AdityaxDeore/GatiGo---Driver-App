@@ -1,4 +1,4 @@
-package com.example.pink_auto
+package com.gatigo.driver
 
 import io.flutter.embedding.android.FlutterActivity
 
