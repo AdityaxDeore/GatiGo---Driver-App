@@ -13,7 +13,7 @@ class DriverAuthLogo extends StatelessWidget {
         width: 120,
         decoration: BoxDecoration(
           shape: BoxShape.circle,
-          color: Colors.white,
+          color: PinkAppTheme.primaryPink,
           border: Border.all(
             color: PinkAppTheme.primaryPink.withValues(alpha: 0.2),
             width: 4,
@@ -27,9 +27,12 @@ class DriverAuthLogo extends StatelessWidget {
           ],
         ),
         child: ClipOval(
-          child: Image.asset(
-            'assets/images/logo_new.png',
-            fit: BoxFit.cover,
+          child: Transform.scale(
+            scale: 1.18,
+            child: Image.asset(
+              'assets/images/logo_new.png',
+              fit: BoxFit.cover,
+            ),
           ),
         ),
       ),

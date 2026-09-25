@@ -117,8 +117,10 @@ class DriverRegistrationView extends StatelessWidget {
                         onPressed: () {
                           if (vm.currentStep == vm.totalSteps - 1) {
                             _submit(context, vm);
-                          } else {
-                            vm.nextStep();
+                          } else if (!vm.nextStep()) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(content: Text('Please complete the required fields for this step.')),
+                            );
                           }
                         },
                       ),
@@ -170,6 +172,13 @@ class DriverRegistrationView extends StatelessWidget {
       if (context.mounted) {
         Navigator.pop(context); // close dialog
         Navigator.pushReplacementNamed(context, '/verification-status');
+      }
+    }).then((success) {
+      if (!success && context.mounted) {
+        Navigator.pop(context);
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Registration failed. Check your documents and try again.')),
+        );
       }
     });
   }

@@ -135,22 +135,38 @@ class DriverApiService {
     required String vehiclePlate,
     required String vehicleMakeModel,
     String serviceType = 'pink_auto',
-    String gender = 'female',
+    String gender = '',
+    Map<String, dynamic>? personalDetails,
+    Map<String, dynamic>? vehicleDetails,
+    Map<String, dynamic>? documents,
   }) async {
     try {
-      final res = await _client.post(
-        '/api/v1/drivers/register-complete',
-        body: {
-          'full_name': fullName,
-          'phone_number': phone,
-          'license_number': licenseNumber,
-          'vehicle_plate': vehiclePlate,
-          'vehicle_make_model': vehicleMakeModel,
-          'service_type': serviceType,
-          'gender': gender,
-        },
-      );
+      final body = <String, dynamic>{
+        'full_name': fullName,
+        'phone_number': phone,
+        'license_number': licenseNumber,
+        'vehicle_plate': vehiclePlate,
+        'vehicle_make_model': vehicleMakeModel,
+        'service_type': serviceType,
+        'gender': gender,
+        if (personalDetails != null) 'personalDetails': personalDetails,
+        if (vehicleDetails != null) 'vehicleDetails': vehicleDetails,
+        if (documents != null) 'documents': documents,
+      };
+      final res = await _client.post('/api/v1/drivers/register-complete', body: body);
       return res is Map<String, dynamic> ? (res['data'] ?? res) : null;
+    } catch (_) {
+      return null;
+    }
+  }
+
+  Future<String?> uploadDocument({required String docType, required String imageBase64}) async {
+    try {
+      final res = await _client.post('/api/v1/drivers/me/documents/upload', body: {
+        'doc_type': docType,
+        'image_base64': imageBase64,
+      });
+      return res is Map<String, dynamic> ? (res['data']?['file_url'] as String?) : null;
     } catch (_) {
       return null;
     }

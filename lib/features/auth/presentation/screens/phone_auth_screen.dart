@@ -4,10 +4,7 @@ import '../../../../core/theme/theme.dart';
 import '../../../../core/localization/translated_text.dart';
 import '../../../../core/storage/session_storage.dart';
 import '../viewmodels/phone_auth_viewmodel.dart';
-import '../widgets/driver_auth_header.dart';
-import '../widgets/driver_auth_input_switcher.dart';
-import '../widgets/driver_auth_logo.dart';
-import '../widgets/driver_auth_timer.dart';
+import '../widgets/driver_auth_card.dart';
 
 class PhoneAuthScreen extends StatefulWidget {
   const PhoneAuthScreen({super.key});
@@ -49,15 +46,28 @@ class _PhoneAuthScreenState extends State<PhoneAuthScreen> {
   }
 
   void _showSnackBar(String message, Color color) {
+    ScaffoldMessenger.of(context).hideCurrentSnackBar();
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(content: TranslatedText(message), backgroundColor: color),
     );
   }
 
-  void _sendOtp() {
+
+  Future<void> _sendOtp() async {
+
     _viewModel.sendOtp(
       onError: (message) => _showSnackBar(message, PinkAppTheme.error),
-      onSuccess: () => _showSnackBar("Code sent! (Dev test OTP: 123456)", PinkAppTheme.primaryPink),
+      onSuccess: () => _showSnackBar(
+        "Verification code sent via SMS to +91 ${_viewModel.phoneController.text.trim()}",
+        PinkAppTheme.primaryPink,
+      ),
+    );
+  }
+
+  void _resendOtp() {
+    _viewModel.resendOtp(
+      onError: (message) => _showSnackBar(message, PinkAppTheme.error),
+      onSuccess: () => _showSnackBar("New verification code dispatched!", PinkAppTheme.primaryPink),
     );
   }
 
@@ -68,10 +78,15 @@ class _PhoneAuthScreenState extends State<PhoneAuthScreen> {
         _showSnackBar("Authentication Successful!", PinkAppTheme.success);
         final token = authData['token'] as String? ?? '';
         final user = authData['user'] as Map<String, dynamic>? ?? {};
-        final isReg = user['is_registered'] == true;
-        final isApp = user['is_approved'] == true;
+        final isReg = user['is_registered'] == true || authData['isRegistered'] == true;
+        final isApp = user['is_approved'] == true || authData['isApproved'] == true;
         final phone = _viewModel.phoneController.text.trim();
-        await SessionStorage.login(token, isRegistered: isReg, phone: phone.isNotEmpty ? '+91 $phone' : null);
+        await SessionStorage.login(
+          token,
+          isRegistered: isReg,
+          isApproved: isApp,
+          phone: phone.isNotEmpty ? '+91 $phone' : null,
+        );
         if (token.isNotEmpty) ApiClient().setAuthToken(token);
         if (mounted) {
           final target = !isReg ? '/registration' : (isApp ? '/home' : '/verification-status');
@@ -104,80 +119,25 @@ class _PhoneAuthScreenState extends State<PhoneAuthScreen> {
           body: Container(
             decoration: BoxDecoration(
               gradient: LinearGradient(
-                colors: [PinkAppTheme.accentPurple.withValues(alpha: 0.06), PinkAppTheme.primaryPink.withValues(alpha: 0.03), Colors.white],
-                begin: Alignment.topCenter, end: Alignment.bottomCenter,
+                colors: [
+                  PinkAppTheme.accentPurple.withValues(alpha: 0.06),
+                  PinkAppTheme.primaryPink.withValues(alpha: 0.03),
+                  Colors.white
+                ],
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
               ),
             ),
             child: SafeArea(
               child: Center(
                 child: SingleChildScrollView(
                   padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 16.0),
-                  child: Container(
-                    constraints: const BoxConstraints(maxWidth: 450),
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(28),
-                      boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 20, offset: const Offset(0, 10))],
-                    ),
-                    padding: const EdgeInsets.all(28.0),
-                    child: AnimatedSize(
-                      duration: const Duration(milliseconds: 300),
-                      curve: Curves.easeInOutCubic,
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        crossAxisAlignment: CrossAxisAlignment.stretch,
-                        children: [
-                          const SizedBox(height: 10),
-                          const DriverAuthLogo(),
-                          const SizedBox(height: 28),
-                          AnimatedSwitcher(
-                            duration: const Duration(milliseconds: 250),
-                            child: DriverAuthHeader(
-                              currentStep: _viewModel.currentStep,
-                              phone: _viewModel.phoneController.text,
-                              textTheme: textTheme,
-                            ),
-                          ),
-                          const SizedBox(height: 32),
-                          AnimatedSwitcher(
-                            duration: const Duration(milliseconds: 250),
-                            child: DriverAuthInputSwitcher(
-                              currentStep: _viewModel.currentStep,
-                              phoneController: _viewModel.phoneController,
-                              phoneError: _viewModel.phoneError,
-                              onPhoneSubmitted: _sendOtp,
-                              otpControllers: _viewModel.otpControllers,
-                              otpFocusNodes: _viewModel.otpFocusNodes,
-                              onOtpChanged: (code) {
-                                if (code.length == 6) _verifyOtp();
-                              },
-                            ),
-                          ),
-                          AnimatedSwitcher(
-                            duration: const Duration(milliseconds: 250),
-                            child: DriverAuthTimer(
-                              currentStep: _viewModel.currentStep,
-                              canResendOtp: _viewModel.canResendOtp,
-                              resendTimerSeconds: _viewModel.resendTimerSeconds,
-                              onResend: _viewModel.startTimer,
-                              textTheme: textTheme,
-                            ),
-                          ),
-                          const SizedBox(height: 32),
-                          Center(
-                            child: AnimatedSwitcher(
-                              duration: const Duration(milliseconds: 200),
-                              child: DriverAuthActionButton(
-                                currentStep: _viewModel.currentStep,
-                                onSendOtp: _sendOtp,
-                                onVerifyOtp: _verifyOtp,
-                              ),
-                            ),
-                          ),
-                          const SizedBox(height: 10),
-                        ],
-                      ),
-                    ),
+                  child: DriverAuthCard(
+                    viewModel: _viewModel,
+                    textTheme: textTheme,
+                    onSendOtp: _sendOtp,
+                    onResendOtp: _resendOtp,
+                    onVerifyOtp: _verifyOtp,
                   ),
                 ),
               ),

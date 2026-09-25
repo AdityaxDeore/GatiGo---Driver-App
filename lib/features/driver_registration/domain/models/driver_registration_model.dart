@@ -20,20 +20,26 @@ class PersonalDetails {
   final String fullName;
   final String dob;
   final String address;
+  final String gender;
+  final String licenseNumber;
   final String? profilePhotoPath;
 
   PersonalDetails({
     this.fullName = '',
     this.dob = '',
     this.address = '',
+    this.gender = '',
+    this.licenseNumber = '',
     this.profilePhotoPath,
   });
 
-  PersonalDetails copyWith({String? fullName, String? dob, String? address, String? profilePhotoPath}) {
+  PersonalDetails copyWith({String? fullName, String? dob, String? address, String? gender, String? licenseNumber, String? profilePhotoPath}) {
     return PersonalDetails(
       fullName: fullName ?? this.fullName,
       dob: dob ?? this.dob,
       address: address ?? this.address,
+      gender: gender ?? this.gender,
+      licenseNumber: licenseNumber ?? this.licenseNumber,
       profilePhotoPath: profilePhotoPath ?? this.profilePhotoPath,
     );
   }

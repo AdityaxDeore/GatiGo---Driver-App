@@ -27,10 +27,25 @@ class StepPersonalDetails extends StatelessWidget {
         const SizedBox(height: 16),
         TextFormField(
           initialValue: details.dob,
-          decoration:
-              const InputDecoration(labelText: "Date of Birth (DD/MM/YYYY)"),
-          onChanged: (val) =>
-              vm.updatePersonalDetails(details.copyWith(dob: val)),
+          readOnly: true,
+          decoration: const InputDecoration(
+            labelText: "Date of Birth (DD/MM/YYYY)",
+            suffixIcon: Icon(Icons.calendar_today_outlined),
+          ),
+          onTap: () async {
+            final selectedDate = await showDatePicker(
+              context: context,
+              initialDate: _parseDate(details.dob) ?? DateTime(2000),
+              firstDate: DateTime(1900),
+              lastDate: DateTime.now(),
+            );
+            if (selectedDate != null) {
+              final formattedDate = '${selectedDate.day.toString().padLeft(2, '0')}/'
+                  '${selectedDate.month.toString().padLeft(2, '0')}/'
+                  '${selectedDate.year}';
+              vm.updatePersonalDetails(details.copyWith(dob: formattedDate));
+            }
+          },
         ),
         const SizedBox(height: 16),
         TextFormField(
@@ -39,8 +54,28 @@ class StepPersonalDetails extends StatelessWidget {
           onChanged: (val) =>
               vm.updatePersonalDetails(details.copyWith(address: val)),
         ),
+        const SizedBox(height: 16),
+        TextFormField(
+          initialValue: details.licenseNumber,
+          decoration: const InputDecoration(labelText: "Driving Licence Number"),
+          textCapitalization: TextCapitalization.characters,
+          onChanged: (val) => vm.updatePersonalDetails(details.copyWith(licenseNumber: val.toUpperCase())),
+        ),
+        const SizedBox(height: 16),
+        DropdownButtonFormField<String>(
+          initialValue: details.gender.isEmpty ? null : details.gender,
+          decoration: const InputDecoration(labelText: "Gender"),
+          items: const ['Male', 'Female', 'Other'].map((gender) => DropdownMenuItem(value: gender, child: Text(gender))).toList(),
+          onChanged: (gender) => vm.updatePersonalDetails(details.copyWith(gender: gender)),
+        ),
       ],
     );
+  }
+
+  static DateTime? _parseDate(String value) {
+    final parts = value.split('/');
+    if (parts.length != 3) return null;
+    return DateTime.tryParse('${parts[2]}-${parts[1]}-${parts[0]}');
   }
 }
 

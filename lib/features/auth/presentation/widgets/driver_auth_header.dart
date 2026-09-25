@@ -8,12 +8,14 @@ class DriverAuthHeader extends StatelessWidget {
   final AuthState currentStep;
   final String phone;
   final TextTheme textTheme;
+  final VoidCallback? onEditPhone;
 
   const DriverAuthHeader({
     super.key,
     required this.currentStep,
     required this.phone,
     required this.textTheme,
+    this.onEditPhone,
   });
 
   @override
@@ -34,7 +36,7 @@ class DriverAuthHeader extends StatelessWidget {
             ),
             const SizedBox(height: 12),
             TranslatedText(
-              "We will send you a 4-digit verification code.",
+              "We will send you a 6-digit verification code.",
               style: textTheme.bodyMedium?.copyWith(
                 color: PinkAppTheme.textLight,
               ),
@@ -56,12 +58,32 @@ class DriverAuthHeader extends StatelessWidget {
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: 12),
-            TranslatedText(
-              "A verification code has been successfully dispatched to +91 $phone",
-              style: textTheme.bodyMedium?.copyWith(
-                color: PinkAppTheme.textLight,
-              ),
-              textAlign: TextAlign.center,
+            Wrap(
+              alignment: WrapAlignment.center,
+              crossAxisAlignment: WrapCrossAlignment.center,
+              spacing: 6,
+              children: [
+                TranslatedText(
+                  "A verification code has been successfully dispatched to +91 $phone",
+                  style: textTheme.bodyMedium?.copyWith(
+                    color: PinkAppTheme.textLight,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+                if (onEditPhone != null)
+                  GestureDetector(
+                    onTap: onEditPhone,
+                    child: const Text(
+                      "Edit",
+                      style: TextStyle(
+                        color: PinkAppTheme.primaryPink,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 14,
+                        decoration: TextDecoration.underline,
+                      ),
+                    ),
+                  ),
+              ],
             ),
           ],
         );

@@ -3,6 +3,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 class SessionStorage {
   static const String _keyIsLoggedIn = 'is_logged_in';
   static const String _keyIsDriverRegistered = 'is_driver_registered';
+  static const String _keyIsApproved = 'is_driver_approved';
   static const String _keyIsVerificationPending = 'is_verification_pending';
   static const String _keyAuthToken = 'auth_token';
   static const String _keyProfileImageUrl = 'profile_image_url';
@@ -13,6 +14,7 @@ class SessionStorage {
 
   static bool _isLoggedIn = false;
   static bool _isDriverRegistered = false;
+  static bool _isApproved = false;
   static bool _isVerificationPending = false;
   static String? _authToken;
   static String? _profileImageUrl;
@@ -25,6 +27,7 @@ class SessionStorage {
     final prefs = await SharedPreferences.getInstance();
     _isLoggedIn = prefs.getBool(_keyIsLoggedIn) ?? false;
     _isDriverRegistered = prefs.getBool(_keyIsDriverRegistered) ?? false;
+    _isApproved = prefs.getBool(_keyIsApproved) ?? false;
     _isVerificationPending = prefs.getBool(_keyIsVerificationPending) ?? false;
     _authToken = prefs.getString(_keyAuthToken);
     _profileImageUrl = prefs.getString(_keyProfileImageUrl);
@@ -37,6 +40,8 @@ class SessionStorage {
   static bool isLoggedIn() => _isLoggedIn;
 
   static bool isDriverRegistered() => _isDriverRegistered;
+
+  static bool isApproved() => _isApproved;
 
   static bool isVerificationPending() => _isVerificationPending;
 
@@ -55,19 +60,26 @@ class SessionStorage {
   static Future<void> login(
     String token, {
     bool isRegistered = false,
+    bool? isApproved,
     String? phone,
     String? name,
   }) async {
     _isLoggedIn = true;
     _authToken = token;
-    _isDriverRegistered = isRegistered;
+    final resolvedApproved = isApproved ?? isRegistered;
+    _isDriverRegistered = isRegistered && resolvedApproved;
+    _isApproved = resolvedApproved;
+    _isVerificationPending = isRegistered && !resolvedApproved;
+
     if (phone != null && phone.isNotEmpty) _driverPhone = phone;
     if (name != null && name.isNotEmpty) _driverName = name;
 
     final prefs = await SharedPreferences.getInstance();
     await prefs.setBool(_keyIsLoggedIn, true);
     await prefs.setString(_keyAuthToken, token);
-    await prefs.setBool(_keyIsDriverRegistered, isRegistered);
+    await prefs.setBool(_keyIsDriverRegistered, _isDriverRegistered);
+    await prefs.setBool(_keyIsApproved, _isApproved);
+    await prefs.setBool(_keyIsVerificationPending, _isVerificationPending);
     if (phone != null && phone.isNotEmpty) {
       await prefs.setString(_keyDriverPhone, phone);
     }
@@ -83,6 +95,8 @@ class SessionStorage {
     String? autoType,
   }) async {
     _isVerificationPending = true;
+    _isDriverRegistered = false;
+    _isApproved = false;
     if (name != null && name.isNotEmpty) _driverName = name;
     if (phone != null && phone.isNotEmpty) _driverPhone = phone;
     if (vehicleNumber != null && vehicleNumber.isNotEmpty) {
@@ -94,6 +108,8 @@ class SessionStorage {
 
     final prefs = await SharedPreferences.getInstance();
     await prefs.setBool(_keyIsVerificationPending, true);
+    await prefs.setBool(_keyIsDriverRegistered, false);
+    await prefs.setBool(_keyIsApproved, false);
     if (name != null && name.isNotEmpty) {
       await prefs.setString(_keyDriverName, name);
     }
@@ -111,11 +127,13 @@ class SessionStorage {
   static Future<void> approveDriver() async {
     _isLoggedIn = true;
     _isDriverRegistered = true;
+    _isApproved = true;
     _isVerificationPending = false;
 
     final prefs = await SharedPreferences.getInstance();
     await prefs.setBool(_keyIsLoggedIn, true);
     await prefs.setBool(_keyIsDriverRegistered, true);
+    await prefs.setBool(_keyIsApproved, true);
     await prefs.setBool(_keyIsVerificationPending, false);
   }
 
@@ -128,6 +146,7 @@ class SessionStorage {
   static Future<void> logout() async {
     _isLoggedIn = false;
     _isDriverRegistered = false;
+    _isApproved = false;
     _isVerificationPending = false;
     _authToken = null;
     _profileImageUrl = null;
@@ -139,6 +158,7 @@ class SessionStorage {
     final prefs = await SharedPreferences.getInstance();
     await prefs.remove(_keyIsLoggedIn);
     await prefs.remove(_keyIsDriverRegistered);
+    await prefs.remove(_keyIsApproved);
     await prefs.remove(_keyIsVerificationPending);
     await prefs.remove(_keyAuthToken);
     await prefs.remove(_keyProfileImageUrl);
@@ -158,4 +178,3 @@ class SessionStorage {
     await logout();
   }
 }
-

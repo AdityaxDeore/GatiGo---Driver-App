@@ -1,14 +1,18 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import '../../../../core/services/driver_api_service.dart';
+import '../../services/backend_otp_service.dart';
 
 enum AuthState { enteringPhone, enteringOtp }
 
 class PhoneAuthViewModel extends ChangeNotifier {
-  final DriverApiService _apiService;
+  final BackendOtpService _backendOtpService;
+
   AuthState _currentStep = AuthState.enteringPhone;
   int _resendTimerSeconds = 30;
   Timer? _timer;
+  String? _verificationId;
+  int? _resendToken;
 
   final TextEditingController phoneController = TextEditingController();
   final List<TextEditingController> otpControllers = List.generate(6, (_) => TextEditingController());
@@ -16,13 +20,18 @@ class PhoneAuthViewModel extends ChangeNotifier {
 
   String? _phoneError;
   String? get phoneError => _phoneError;
+  String? _otpError;
+  String? get otpError => _otpError;
+
+  bool _isLoading = false;
+  bool get isLoading => _isLoading;
 
   AuthState get currentStep => _currentStep;
   int get resendTimerSeconds => _resendTimerSeconds;
   bool get canResendOtp => _resendTimerSeconds == 0;
 
   PhoneAuthViewModel({DriverApiService? apiService})
-      : _apiService = apiService ?? DriverApiService();
+      : _backendOtpService = BackendOtpService(apiService ?? DriverApiService());
 
   void startTimer() {
     _resendTimerSeconds = 30;
@@ -31,11 +40,10 @@ class PhoneAuthViewModel extends ChangeNotifier {
     _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
       if (_resendTimerSeconds == 0) {
         _timer?.cancel();
-        notifyListeners();
       } else {
         _resendTimerSeconds--;
-        notifyListeners();
       }
+      notifyListeners();
     });
   }
 
@@ -43,8 +51,16 @@ class PhoneAuthViewModel extends ChangeNotifier {
     if (_currentStep == AuthState.enteringOtp) {
       _currentStep = AuthState.enteringPhone;
       _phoneError = null;
+      _otpError = null;
       notifyListeners();
     }
+  }
+
+  void clearOtp() {
+    for (var c in otpControllers) {
+      c.clear();
+    }
+    notifyListeners();
   }
 
   Future<bool> sendOtp({
@@ -52,9 +68,7 @@ class PhoneAuthViewModel extends ChangeNotifier {
     required VoidCallback onSuccess,
   }) async {
     final phone = phoneController.text.replaceAll(' ', '').trim();
-    final phoneRegex = RegExp(r'^\d{10}$');
-    
-    if (!phoneRegex.hasMatch(phone)) {
+    if (!RegExp(r'^\d{10}$').hasMatch(phone)) {
       _phoneError = "Please enter a valid 10-digit mobile number";
       notifyListeners();
       onError(_phoneError!);
@@ -62,70 +76,84 @@ class PhoneAuthViewModel extends ChangeNotifier {
     }
 
     _phoneError = null;
-    final res = await _apiService.requestOtp(phoneNumber: '+91$phone');
-    if (res['success'] == true) {
-      _currentStep = AuthState.enteringOtp;
-      startTimer();
-      final data = res['data'];
-      final devOtp = (data is Map && data['dev_otp'] != null)
-          ? data['dev_otp'].toString()
-          : (data is Map && data['otp'] != null ? data['otp'].toString() : null);
-      if (devOtp != null && devOtp.length == 6) {
-        for (int i = 0; i < 6; i++) {
-          otpControllers[i].text = devOtp[i];
+    _otpError = null;
+    _isLoading = true;
+    notifyListeners();
+
+    return _backendOtpService.initiatePhoneAuth(
+      phone: phone,
+      resendToken: _resendToken,
+      onSmsCode: (code) {
+        for (int i = 0; i < code.length && i < otpControllers.length; i++) {
+          otpControllers[i].text = code[i];
         }
-      }
-      notifyListeners();
-      onSuccess();
-      return true;
-    } else {
-      final err = res['error'];
-      final msg = err is Map ? (err['message'] ?? 'Failed to send verification code') : 'Failed to send verification code';
-      _phoneError = msg;
-      notifyListeners();
-      onError(msg);
+        notifyListeners();
+      },
+      onError: (msg) {
+        _isLoading = false;
+        _phoneError = msg;
+        notifyListeners();
+        onError(msg);
+      },
+      onSuccess: (id, token, msg, devOtp) {
+        _verificationId = id;
+        _resendToken = token;
+        _isLoading = false;
+        clearOtp();
+        _currentStep = AuthState.enteringOtp;
+        startTimer();
+        notifyListeners();
+        onSuccess();
+      },
+    );
+  }
+
+  Future<bool> resendOtp({
+    required void Function(String message) onError,
+    required VoidCallback onSuccess,
+  }) async {
+    if (!canResendOtp) {
+      onError("Please wait $_resendTimerSeconds seconds before resending");
       return false;
     }
+    return sendOtp(onError: onError, onSuccess: onSuccess);
   }
 
   Future<bool> verifyOtp({
     required void Function(String message) onError,
     required void Function(Map<String, dynamic> authData) onSuccess,
   }) async {
-    final otp = otpControllers.map((c) => c.text).join();
+    final otp = otpControllers.map((c) => c.text.trim()).join();
     if (otp.length != 6) {
-      onError("Please enter the complete 6-digit verification code");
+      _otpError = "Please enter the complete 6-digit verification code";
+      notifyListeners();
+      onError(_otpError!);
       return false;
     }
 
+    _otpError = null;
+    _isLoading = true;
+    notifyListeners();
+
     final phone = phoneController.text.replaceAll(' ', '').trim();
-    final res = await _apiService.verifyOtp(phoneNumber: '+91$phone', otp: otp);
-    if (res['success'] == true) {
-      _timer?.cancel();
-      notifyListeners();
-      onSuccess(res['data'] as Map<String, dynamic>? ?? {});
-      return true;
-    } else {
-      if (otp == '123456' || otp == '999999') {
-        _timer?.cancel();
+    return _backendOtpService.verifyPhoneAuth(
+      phone: phone,
+      enteredOtp: otp,
+      verificationId: _verificationId,
+      onError: (msg) {
+        _isLoading = false;
+        _otpError = msg;
+        clearOtp();
         notifyListeners();
-        onSuccess({
-          'token': 'dev_token_${DateTime.now().millisecondsSinceEpoch}',
-          'user': {
-            'id': 'usr_$phone',
-            'phone_number': '+91$phone',
-            'role': 'driver',
-            'is_registered': false,
-            'is_approved': false,
-          }
-        });
-        return true;
-      }
-      final err = res['error'];
-      final msg = err is Map ? (err['message'] ?? 'Invalid verification code') : 'Invalid verification code';
-      onError(msg);
-      return false;
-    }
+        onError(msg);
+      },
+      onSuccess: (data) {
+        _timer?.cancel();
+        _isLoading = false;
+        notifyListeners();
+        onSuccess(data);
+      },
+    );
   }
 
   @override
